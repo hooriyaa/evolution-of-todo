@@ -1,55 +1,41 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+
+<!--
+Sync Impact Report:
+- Version change: N/A → 1.0.0 (initial constitution)
+- Added principles: SDD, Technology Stack, Storage Constraint, Coding Standards, Modular Architecture, Deliverable Assurance
+- Added sections: Additional Requirements, Development Workflow
+- Templates requiring updates: N/A (initial constitution)
+- Follow-up TODOs: None
+-->
+# Hackathon II: The Evolution of Todo Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### Spec-Driven Development (SDD)
+The System Architect (User) provides Specifications. The Implementation Engine (AI) executes from these Specs. Golden Rule: Do NOT write or modify code without a corresponding update in the Specification Markdown files. Code must always reflect the Specs.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### Technology Stack Standardization
+Language: Python 3.13+, Dependency Manager: UV (uv pip install ...), Testing Framework: pytest, UI Framework: Console/CLI using 'rich' or standard input/output.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### Phase I Storage Constraint
+Storage Strategy: In-Memory Storage ONLY. Forbidden: Do NOT use SQLite, JSON files, or any external database for persistence in this phase. Data Structures: Use Python Lists or Dictionaries to store Task objects.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### Coding Standards & Quality
+Style Guide: Adhere strictly to PEP 8. Type Safety: MANDATORY Python Type Hints for all function arguments and return values. Documentation: Every class and function must have a docstring explaining its purpose, arguments, and returns. Error Handling: Implement robust try-except blocks. The app should never crash; it should display user-friendly error messages.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### Modular Architecture Design
+Pattern: Modular Design (Separation of Concerns). Folder Structure: /specs (Documentation & Requirements), /src (Source Code - separate main.py, logic, and models), /tests (Unit Tests). Imports: Use absolute imports. Avoid circular dependencies.
 
-### [PRINCIPLE_6_NAME]
+### Deliverable Assurance
+Ensure the app can: Add, Delete, Update, View, and Mark Tasks as Complete. Each feature must be tested before implementation is considered complete.
 
+## Additional Requirements
+All components must be testable in isolation. Performance requirements include responsive CLI interactions with no noticeable lag. Security considerations include input validation and protection against injection attacks.
 
-[PRINCIPLE__DESCRIPTION]
-
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
-
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Development Workflow
+All code submissions must include corresponding tests. Code reviews must verify compliance with all constitution principles. Development follows an iterative approach with frequent testing and validation.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+Constitution supersedes all other practices. Amendments require formal documentation and approval. All PRs/reviews must verify compliance with constitution principles. Breaking changes must follow semantic versioning.
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2025-12-06 | **Last Amended**: 2025-12-06
