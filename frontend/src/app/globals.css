@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+body {
+  @apply bg-brand-bg text-brand-black;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+input, textarea {
+  @apply text-brand-black border-brand-gray/30 placeholder-brand-gray/50 bg-white;
+}
+
+/* Custom utility class for "Super Round" corners */
+.rounded-smooth {
+  border-radius: 1.5rem; /* This equals rounded-3xl in Tailwind */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
