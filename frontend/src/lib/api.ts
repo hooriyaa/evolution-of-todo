@@ -34,6 +34,13 @@ apiClient.interceptors.response.use(
   (error) => {
     // Handle specific error responses here if needed
     console.error('API Error:', error);
+
+    // If we get a 401 error, redirect to login
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login'; // Force redirect to login
+    }
+
     return Promise.reject(error);
   }
 );

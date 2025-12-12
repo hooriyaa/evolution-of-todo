@@ -35,8 +35,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Decode the token to get user info
         const payload = token.split('.')[1];
         const decodedPayload = JSON.parse(atob(payload));
+
+        // Check if token is expired
+        const exp = decodedPayload.exp;
+        const currentTime = Math.floor(Date.now() / 1000);
+
+        if (exp && exp < currentTime) {
+          console.log('Token has expired');
+          localStorage.removeItem('token');
+          setIsLoading(false);
+          return;
+        }
+
         const userData: User = {
-          id: decodedPayload.user_id || 0,
+          id: decodedPayload.user_id || decodedPayload.userId || 0,
           name: decodedPayload.name || decodedPayload.sub?.split('@')[0] || '',
           email: decodedPayload.sub || ''
         };
@@ -55,8 +67,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Decode the token to get user info
       const payload = token.split('.')[1];
       const decodedPayload = JSON.parse(atob(payload));
+
       const userData: User = {
-        id: decodedPayload.user_id || 0,
+        id: decodedPayload.user_id || decodedPayload.userId || 0,
         name: decodedPayload.name || decodedPayload.sub?.split('@')[0] || '',
         email: decodedPayload.sub || ''
       };

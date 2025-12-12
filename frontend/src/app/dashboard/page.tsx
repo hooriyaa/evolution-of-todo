@@ -44,7 +44,9 @@ export default function DashboardPage(): JSX.Element {
       setError(null);
     } catch (err: any) {
       console.error("Error fetching tasks:", err);
+      // The API client's response interceptor will handle 401 errors
       if (err.response?.status === 401) {
+        // Token is invalid or expired, logout the user
         router.push("/login");
       } else {
         setError(err.message || "Failed to fetch tasks");
