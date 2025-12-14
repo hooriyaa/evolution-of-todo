@@ -74,7 +74,14 @@ export const TaskCard = ({ task, onToggleComplete, onDelete, onEdit }: TaskCardP
           <div className="flex flex-wrap gap-2 mt-2">
             {(task.dueDate || task.due_date) && (
               <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
-                {new Date(task.dueDate || task.due_date).toLocaleDateString()} {new Date(task.dueDate || task.due_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {(() => {
+                  const dateValue = task.dueDate || task.due_date;
+                  if (dateValue) {
+                    const date = new Date(dateValue);
+                    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                  }
+                  return null;
+                })()}
               </span>
             )}
             {task.category && (

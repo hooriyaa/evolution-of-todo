@@ -13,12 +13,6 @@ interface TaskFormProps {
 }
 
 export const TaskForm = ({ isOpen, onClose, onSubmit, initialData }: TaskFormProps) => {
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [description, setDescription] = useState(initialData?.description || '');
-  const [dueDate, setDueDate] = useState<string>(initialData?.dueDate ? formatDateForInput(initialData.dueDate) : '');
-  const [category, setCategory] = useState(initialData?.category || '');
-  const [error, setError] = useState('');
-
   // Helper function to convert date to local format for datetime input
   const formatDateForInput = (date: Date | string | undefined): string => {
     if (!date) return '';
@@ -32,6 +26,12 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, initialData }: TaskFormPro
     // Format as YYYY-MM-DDTHH:mm for datetime-local input
     return localDate.toISOString().slice(0, 16);
   };
+
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [description, setDescription] = useState(initialData?.description || '');
+  const [dueDate, setDueDate] = useState<string>(initialData?.dueDate ? formatDateForInput(initialData.dueDate) : '');
+  const [category, setCategory] = useState(initialData?.category || '');
+  const [error, setError] = useState('');
 
   // Update form fields when initialData changes (for editing)
   useEffect(() => {
