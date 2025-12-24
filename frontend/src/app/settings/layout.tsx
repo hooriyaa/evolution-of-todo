@@ -21,7 +21,24 @@ export default function SettingsLayout({
   }, [user, isLoading, router]);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="flex flex-col items-center">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-brand-lime border-t-transparent rounded-full animate-spin"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+              <div className="w-8 h-8 bg-brand-lime rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          <p className="mt-6 text-lg font-medium text-brand-black">Loading...</p>
+          <div className="mt-4 flex space-x-2">
+            <div className="w-3 h-3 bg-brand-lime rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-3 h-3 bg-brand-lime rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-3 h-3 bg-brand-lime rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {

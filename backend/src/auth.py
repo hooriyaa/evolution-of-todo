@@ -43,6 +43,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     from .schemas import TokenData
     from .models import User
     from .db import get_db
+    from sqlmodel import select
 
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -68,10 +69,15 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     except Exception:
         raise credentials_exception
 
-    db = next(get_db())
-    user = db.query(User).filter(User.email == token_data.email).first()
-    if user is None:
-        raise credentials_exception
-
-    return user
+    # Get a database session using the generator
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        # Use SQLModel's select statement
+        user = db.exec(select(User).where(User.email == token_data.email)).first()
+        if user is None:
+            raise credentials_exception
+        return user
+    finally:
+        db.close()
     
