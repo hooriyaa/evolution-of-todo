@@ -6,6 +6,11 @@ from ..models import Task, User
 from ..schemas import TaskCreate, TaskUpdate, TaskResponse
 from ..auth import get_current_user
 from ..db import get_db
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["tasks"])
 
@@ -175,13 +180,17 @@ def toggle_task_completion(
     """
     Toggle completion status of a task
     """
+    logger.info(f"Attempting to toggle task completion for task_id: {task_id}, user_id: {current_user.id}")
+
     task = session.get(Task, task_id)
 
     if not task:
+        logger.error(f"Task not found: {task_id}")
         raise HTTPException(status_code=404, detail="Task not found")
 
     # Verify that the task belongs to the user - fix type mismatch
     if str(task.user_id) != str(current_user.id):
+        logger.error(f"User {current_user.id} trying to access task {task_id} belonging to user {task.user_id}")
         raise HTTPException(status_code=403, detail="Forbidden: access denied")
 
     # Toggle completion status
@@ -191,5 +200,7 @@ def toggle_task_completion(
     session.add(task)
     session.commit()
     session.refresh(task)
+
+    logger.info(f"Successfully toggled task {task_id} completion status to {task.completed}")
 
     return task

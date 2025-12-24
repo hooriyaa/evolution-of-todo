@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import ChatWidget from '@/components/ChatWidget/ChatWidget';
 
 export default function DashboardLayout({
   children,
@@ -20,10 +21,6 @@ export default function DashboardLayout({
     }
   }, [user, isLoading, router]);
 
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
-
   if (!user) {
     return null; // Redirect will happen via useEffect
   }
@@ -33,6 +30,7 @@ export default function DashboardLayout({
       <Sidebar userId={user.id.toString()} />
       <div className="flex-1 h-full overflow-y-auto p-4 md:p-8 relative scroll-smooth">
         {children}
+        <ChatWidget />
       </div>
     </div>
   );

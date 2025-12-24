@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react"; // optional; remove if not installed
 import apiClient from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { Sidebar } from "@/components/Sidebar/Sidebar";
 import { Button } from "@/components/Button/Button";
 import { TaskCard } from "@/components/TaskCard/TaskCard";
 import { TaskForm } from "@/components/TaskForm/TaskForm";
@@ -122,8 +121,21 @@ export default function DashboardPage(): JSX.Element {
 
   if (loading || authLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="flex flex-col items-center">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-brand-lime border-t-transparent rounded-full animate-spin"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+              <div className="w-8 h-8 bg-brand-lime rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          <p className="mt-6 text-lg font-medium text-brand-black">Loading your tasks...</p>
+          <div className="mt-4 flex space-x-2">
+            <div className="w-3 h-3 bg-brand-lime rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-3 h-3 bg-brand-lime rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-3 h-3 bg-brand-lime rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
+          </div>
+        </div>
       </div>
     );
   }
