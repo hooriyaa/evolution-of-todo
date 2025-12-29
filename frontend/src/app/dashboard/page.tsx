@@ -18,6 +18,8 @@ export default function DashboardPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
 
@@ -152,49 +154,113 @@ export default function DashboardPage(): JSX.Element {
     <div className="max-w-4xl mx-auto w-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h1 className="text-2xl font-bold text-brand-black pl-16 md:pl-0">My Tasks</h1>
-        <Button
-          onClick={() => {
-            setEditingTask(null);
-            setShowTaskForm(true);
-          }}
-          variant="primary"
-          className="w-full sm:w-auto"
-        >
-          <span className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            <span>New Task</span>
-          </span>
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          <Button
+            onClick={() => {
+              setEditingTask(null);
+              setShowTaskForm(true);
+            }}
+            variant="primary"
+            className="w-full sm:w-auto"
+          >
+            <span className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              <span>New Task</span>
+            </span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Search and Filter Controls */}
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Search tasks..."
+            className="w-full bg-white border border-brand-gray/30 rounded-2xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-brand-lime"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <svg
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-brand-gray/50"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+
+        <div className="relative">
+          <select
+            className="bg-white border border-brand-gray/30 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime min-w-[150px] appearance-none pr-10"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="All">All Categories</option>
+            <option value="Work">Work</option>
+            <option value="Personal">Personal</option>
+            <option value="Urgent">Urgent</option>
+            <option value="Design">Design</option>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-brand-gray">
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+            </svg>
+          </div>
+        </div>
       </div>
 
       {error && <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">{error}</div>}
 
-      <div className="grid grid-cols-1 gap-4 sm:gap-6">
-        {tasks.length > 0 ? (
-          <AnimatePresence>
-            {tasks.map((task, index) => (
-              <motion.div
-                key={task.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-              >
-                <TaskCard
-                  task={{...task, createdAt: task.createdAt}}
-                  onToggleComplete={(taskId) => { toggleTaskCompletion(typeof taskId === 'number' ? taskId : parseInt(taskId)); }}
-                  onDelete={(taskId) => { deleteTask(typeof taskId === 'number' ? taskId : parseInt(taskId)); }}
-                  onEdit={handleEditTask}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        ) : (
-          <div className="text-center py-12 col-span-full">
-            <p className="text-brand-gray">No tasks yet. Add your first task!</p>
+      {/* Filter the tasks based on search query and selected category */}
+      {(() => {
+        const filteredTasks = tasks.filter(task => {
+          const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                               (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()));
+          const matchesCategory = selectedCategory === "All" || task.category === selectedCategory;
+          return matchesSearch && matchesCategory;
+        });
+
+        return (
+          <div className="grid grid-cols-1 gap-4 sm:gap-6">
+            {filteredTasks.length > 0 ? (
+              <AnimatePresence>
+                {filteredTasks.map((task, index) => (
+                  <motion.div
+                    key={task.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    <TaskCard
+                      task={{...task, createdAt: task.createdAt}}
+                      onToggleComplete={(taskId) => { toggleTaskCompletion(typeof taskId === 'number' ? taskId : parseInt(taskId)); }}
+                      onDelete={(taskId) => { deleteTask(typeof taskId === 'number' ? taskId : parseInt(taskId)); }}
+                      onEdit={handleEditTask}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            ) : (
+              <div className="text-center py-12 col-span-full">
+                {tasks.length > 0 ? (
+                  <p className="text-brand-gray">No tasks found matching your search.</p>
+                ) : (
+                  <p className="text-brand-gray">No tasks yet. Add your first task!</p>
+                )}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        );
+      })()}
 
       {/* Task form modal / drawer placeholder */}
       <TaskForm
