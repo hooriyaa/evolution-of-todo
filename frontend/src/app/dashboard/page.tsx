@@ -203,11 +203,11 @@ export default function DashboardPage(): JSX.Element {
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
-            <option value="All">All Categories</option>
-            <option value="Work">Work</option>
-            <option value="Personal">Personal</option>
-            <option value="Urgent">Urgent</option>
-            <option value="Design">Design</option>
+            <option value="All" className="hover:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">All Categories</option>
+            <option value="Work" className="focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">Work</option>
+            <option value="Personal" className="focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">Personal</option>
+            <option value="Urgent" className="focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">Urgent</option>
+            <option value="Design" className="focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">Design</option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-brand-gray">
             <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
