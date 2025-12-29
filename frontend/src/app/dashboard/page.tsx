@@ -11,6 +11,7 @@ import { TaskCard } from "@/components/TaskCard/TaskCard";
 import { TaskForm } from "@/components/TaskForm/TaskForm";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Task } from "@/lib/types";
+import StatsOverview from "@/components/Dashboard/StatsOverview";
 
 export default function DashboardPage(): JSX.Element {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -171,6 +172,9 @@ export default function DashboardPage(): JSX.Element {
           </Button>
         </div>
       </div>
+
+      {/* Stats Overview */}
+      <StatsOverview tasks={tasks} />
 
       {/* Search and Filter Controls */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
