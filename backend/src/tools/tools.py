@@ -105,3 +105,21 @@ def delete_task(session: Session, task_id: int, user_id: int) -> bool:
         session.commit()
         return True
     return False
+
+def complete_task(session: Session, title: str, user_id: int) -> str:
+    """Mark a task as completed by title for the specified user"""
+    # Query for a task with the given title and user_id (case-insensitive)
+    task = session.exec(
+        select(Task).where(
+            Task.user_id == user_id,
+            Task.title.ilike(f'%{title}%')  # Case-insensitive partial match
+        )
+    ).first()
+
+    if task:
+        task.completed = True
+        session.add(task)
+        session.commit()
+        return f"Task '{task.title}' marked as completed! ✅"
+    else:
+        return "Task not found."

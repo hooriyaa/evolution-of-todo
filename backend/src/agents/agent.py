@@ -61,6 +61,21 @@ class TodoAgent:
                         "required": ["task_id", "user_id"]
                     }
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "complete_task",
+                    "description": "Mark a task as completed by title",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "title": {"type": "string", "description": "The title of the task to mark as completed"},
+                            "user_id": {"type": "integer", "description": "The ID of the user"}
+                        },
+                        "required": ["title", "user_id"]
+                    }
+                }
             }
         ]
 
@@ -81,6 +96,7 @@ Current User ID: {user_id}
 # RULES
 - **Tool Usage:** ALWAYS use `user_id={user_id}`.
 - **Extraction:** Look for `title`, `description`, `due_date`, and `category` (e.g., 'Urgent', 'Personal').
+- **Complete Tasks:** You can now mark tasks as complete using the `complete_task` tool. If a user says 'I did the laundry', infer that the 'Laundry' task should be marked complete.
 
 # GUIDANCE & EXAMPLES
 - If the user says "add task" generically or seems confused, **YOU MUST SHOW THIS EXAMPLE**:
@@ -106,7 +122,7 @@ Current User ID: {user_id}
 
             if tool_calls:
                 # Execute the tools
-                from ..tools.tools import add_task, list_tasks, delete_task
+                from ..tools.tools import add_task, list_tasks, delete_task, complete_task
 
                 for tool_call in tool_calls:
                     function_name = tool_call.function.name
@@ -142,6 +158,9 @@ Current User ID: {user_id}
                             return "Task deleted successfully."
                         else:
                             return "Could not delete the task. It may not exist or you may not have permission."
+                    elif function_name == "complete_task":
+                        result = complete_task(session, **function_args)
+                        return result
 
             # Handle case where there's no tool call but we need to return content
             if response_message and hasattr(response_message, 'content') and response_message.content:
