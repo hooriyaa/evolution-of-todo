@@ -28,7 +28,7 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden flex-row bg-brand-bg">
       <Sidebar userId={user.id.toString()} />
-      <div className="flex-1 h-full overflow-y-auto p-4 md:p-8 relative scroll-smooth">
+      <div className="flex-1 h-full overflow-y-auto p-4 md:p-8 relative scroll-smooth w-full">
         {children}
         <ChatWidget />
       </div>

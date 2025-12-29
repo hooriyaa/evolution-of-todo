@@ -100,7 +100,7 @@ const ChatWidget: React.FC = () => {
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {isOpen ? (
-        <div className="w-96 h-[500px] bg-gray-900 text-white rounded-2xl shadow-xl flex flex-col border border-gray-700">
+        <div className="w-full max-w-sm sm:max-w-md md:w-96 h-[550px] bg-gray-900 text-white rounded-2xl shadow-xl flex flex-col border border-gray-700">
           {/* Header */}
           <div className="bg-gray-800 p-4 rounded-t-2xl flex justify-between items-center">
             <h3 className="font-bold text-lg">AI Assistant</h3>
@@ -132,7 +132,7 @@ const ChatWidget: React.FC = () => {
                   <div className="mb-4">
                     <Bot className="text-[#D4E76C]" size={48} />
                   </div>
-                  <h2 className="text-xl font-semibold mb-2">👋 Hi! I'm your AI Task Manager</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold mb-2">👋 Hi! I'm your AI Task Manager</h2>
                   <p className="text-gray-400 mb-6">How can I help you today?</p>
 
                   <div className="flex flex-wrap gap-2 justify-center">
@@ -162,22 +162,27 @@ const ChatWidget: React.FC = () => {
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`mb-3 rounded-2xl p-3 max-w-[80%] ${
+                    className={`mb-3 rounded-2xl p-3 max-w-[85%] sm:max-w-[80%] ${
                       msg.role === 'user'
                         ? 'bg-[#D4E76C] text-gray-900 ml-auto'
                         : 'bg-gray-800 mr-auto'
                     }`}
                   >
                     <div className="whitespace-pre-wrap">{msg.content}</div>
-                    <div className="text-xs opacity-70 mt-1">
+                    <div className="text-sm opacity-70 mt-1">
                       {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                 ))}
                 {isLoading && (
-                  <div className="bg-gray-800 rounded-2xl p-3 max-w-[80%] mr-auto">
+                  <div className="bg-gray-800 rounded-2xl p-3 max-w-[85%] sm:max-w-[80%] mr-auto">
                     <div className="flex items-center">
-                      <div className="animate-pulse">Thinking...</div>
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-brand-lime rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-brand-lime rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2 h-2 bg-brand-lime rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      </div>
+                      <span className="ml-2">Thinking...</span>
                     </div>
                   </div>
                 )}
@@ -194,7 +199,7 @@ const ChatWidget: React.FC = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Ask me to manage tasks..."
-                className="flex-1 bg-gray-800 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#D4E76C]"
+                className="flex-1 bg-gray-800 text-white rounded-full px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#D4E76C]"
                 disabled={isLoading}
               />
               <button

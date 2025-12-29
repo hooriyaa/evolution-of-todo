@@ -149,15 +149,16 @@ export default function DashboardPage(): JSX.Element {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-brand-black">My Tasks</h1>
+    <div className="max-w-4xl mx-auto w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <h1 className="text-2xl font-bold text-brand-black pl-16 md:pl-0">My Tasks</h1>
         <Button
           onClick={() => {
             setEditingTask(null);
             setShowTaskForm(true);
           }}
           variant="primary"
+          className="w-full sm:w-auto"
         >
           <span className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
@@ -168,7 +169,7 @@ export default function DashboardPage(): JSX.Element {
 
       {error && <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">{error}</div>}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6">
         {tasks.length > 0 ? (
           <AnimatePresence>
             {tasks.map((task, index) => (

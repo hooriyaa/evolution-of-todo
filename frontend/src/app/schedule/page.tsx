@@ -170,17 +170,17 @@ const SchedulePage = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
+    <div className="max-w-6xl mx-auto w-full">
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-brand-black">Schedule</h1>
-            <p className="text-brand-gray">Manage tasks by time and date</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-brand-black pl-16 md:pl-0">Schedule</h1>
+            <p className="text-brand-gray pl-16 md:pl-0">Manage tasks by time and date</p>
           </div>
           {/* Calendar Button */}
           <button
             onClick={openDatePicker}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-lime text-brand-black rounded-full font-medium hover:bg-brand-lime/90 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-brand-lime text-brand-black rounded-full font-medium hover:bg-brand-lime/90 transition-colors w-full sm:w-auto justify-center"
           >
             <Calendar className="w-4 h-4" />
             <span>Change Date</span>
@@ -198,13 +198,13 @@ const SchedulePage = () => {
       </div>
 
       {/* Date Strip */}
-      <div className="mb-8">
-        <div className="flex overflow-x-auto pb-4 space-x-3 scrollbar-hide">
+      <div className="mb-6">
+        <div className="flex overflow-x-auto pb-2 space-x-2 scrollbar-hide max-w-full">
           {dateRange.map((date) => (
             <button
               key={date}
               onClick={() => setSelectedDate(date)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${
                 selectedDate === date
                   ? 'bg-brand-lime text-brand-black'
                   : 'bg-gray-100 text-brand-black hover:bg-gray-200'
@@ -217,9 +217,9 @@ const SchedulePage = () => {
       </div>
 
       {/* Timeline View */}
-      <div className="bg-white rounded-3xl p-6 shadow-sm">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm">
         <div className="mb-4">
-          <h2 className="text-xl font-bold text-brand-black">
+          <h2 className="text-lg sm:text-xl font-bold text-brand-black">
             {formatDate(selectedDate)}
           </h2>
         </div>
@@ -245,13 +245,13 @@ const SchedulePage = () => {
             });
 
             return (
-              <div key={hour} className="flex">
-                <div className="w-20 flex-shrink-0 pt-1">
+              <div key={hour} className="flex flex-col sm:flex-row">
+                <div className="w-full sm:w-20 flex-shrink-0 pt-1 mb-2 sm:mb-0">
                   <span className="text-sm text-brand-gray">
                     {hour > 12 ? `${hour - 12} PM` : `${hour} AM`}
                   </span>
                 </div>
-                <div className="flex-1 ml-4">
+                <div className="flex-1 ml-0 sm:ml-4">
                   {tasksForHour.length > 0 ? (
                     <div className="space-y-2">
                       {tasksForHour.map((taskForHour) => {
@@ -277,7 +277,7 @@ const SchedulePage = () => {
                             }}
                           >
                             <div className="flex justify-between items-start">
-                              <div className="font-bold flex-grow">{taskForHour.title}</div>
+                              <div className="font-bold flex-grow text-sm">{taskForHour.title}</div>
                               <Eye size={16} className="ml-2 text-current opacity-70" />
                             </div>
                             <div className="flex items-center text-xs opacity-80 mt-1">
@@ -312,14 +312,14 @@ const SchedulePage = () => {
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="bg-white rounded-3xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-3xl p-4 max-w-[90%] w-full max-h-[70vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold text-brand-black">{selectedTask.title}</h3>
+              <h3 className="text-lg font-bold text-brand-black break-words">{selectedTask.title}</h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-brand-gray hover:text-brand-black"
+                className="text-brand-gray hover:text-brand-black ml-2"
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
@@ -329,14 +329,14 @@ const SchedulePage = () => {
             {selectedTask.description && (
               <div className="mb-4">
                 <h4 className="text-sm font-semibold text-brand-gray mb-1">Description</h4>
-                <p className="text-brand-black">{selectedTask.description}</p>
+                <p className="text-brand-black text-sm break-words">{selectedTask.description}</p>
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 gap-4 mb-4">
               <div>
                 <h4 className="text-sm font-semibold text-brand-gray mb-1">Time</h4>
-                <p className="text-brand-black">
+                <p className="text-brand-black text-sm">
                   {selectedTask.due_date || selectedTask.dueDate
                     ? new Date(selectedTask.due_date || selectedTask.dueDate!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     : 'Not set'}
@@ -350,7 +350,7 @@ const SchedulePage = () => {
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-brand-gray mb-1">Date</h4>
-                <p className="text-brand-black">
+                <p className="text-brand-black text-sm">
                   {selectedTask.due_date || selectedTask.dueDate
                     ? new Date(selectedTask.due_date || selectedTask.dueDate!).toLocaleDateString()
                     : 'Not set'}
@@ -358,7 +358,7 @@ const SchedulePage = () => {
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-brand-gray mb-1">Status</h4>
-                <p className="text-brand-black">{selectedTask.completed ? 'Completed' : 'Pending'}</p>
+                <p className="text-brand-black text-sm">{selectedTask.completed ? 'Completed' : 'Pending'}</p>
               </div>
             </div>
 

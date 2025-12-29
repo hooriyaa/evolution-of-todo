@@ -37,7 +37,7 @@ export default function LoginPage(): React.ReactElement {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Left side - Branding */}
+      {/* Left side - Branding (Desktop) */}
       <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-brand-black to-gray-900 text-brand-lime items-center justify-center p-12 relative overflow-hidden">
         {/* Decorative background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,231,108,0.1)_0%,rgba(0,0,0,0)_70%)]"></div>
@@ -60,9 +60,24 @@ export default function LoginPage(): React.ReactElement {
         </div>
       </div>
 
+      {/* Mobile Header - Branding */}
+      <div className="md:hidden bg-gradient-to-br from-brand-black to-gray-900 text-brand-lime p-6">
+        <div className="flex flex-col items-center justify-center text-center">
+          <Image
+            src={logo}
+            alt="Todo App Logo"
+            width={80}
+            height={80}
+            className="object-contain drop-shadow-md mb-4"
+          />
+          <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-lime to-white mb-2">Todo App</h1>
+          <p className="text-base text-gray-400 font-light tracking-wide">Stay organized with style</p>
+        </div>
+      </div>
+
       {/* Right side - Login Form */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-6 bg-brand-bg">
-        <div className="bg-brand-card p-8 rounded-3xl shadow-2xl w-full max-w-md">
+      <div className="w-full md:w-1/2 flex items-center justify-center p-4 bg-brand-bg flex-1">
+        <div className="bg-brand-card p-6 md:p-8 rounded-3xl shadow-2xl w-[90%] max-w-md">
           <h1 className="text-2xl font-bold text-center text-brand-black mb-6">
             Sign in to your account
           </h1>
