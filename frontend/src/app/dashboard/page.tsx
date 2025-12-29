@@ -172,8 +172,8 @@ export default function DashboardPage(): JSX.Element {
       </div>
 
       {/* Search and Filter Controls */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="relative flex-1">
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative w-full">
           <input
             type="text"
             placeholder="Search tasks..."
@@ -197,9 +197,9 @@ export default function DashboardPage(): JSX.Element {
           </svg>
         </div>
 
-        <div className="relative">
+        <div className="relative w-full md:w-48">
           <select
-            className="bg-white border border-brand-gray/30 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime min-w-[150px] appearance-none pr-10"
+            className="w-full bg-white border border-brand-gray/30 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime appearance-none pr-10"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
