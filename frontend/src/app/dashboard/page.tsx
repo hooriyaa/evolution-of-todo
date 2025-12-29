@@ -198,9 +198,9 @@ export default function DashboardPage(): JSX.Element {
           </svg>
         </div>
 
-        <div className="relative w-full md:w-48">
+        <div className="relative w-full md:w-52">
           <select
-            className="w-full bg-white border border-brand-gray/30 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime appearance-none pr-10"
+            className="w-full bg-white border border-brand-gray/30 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime appearance-none pr-10 truncate"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
@@ -217,9 +217,9 @@ export default function DashboardPage(): JSX.Element {
           </div>
         </div>
 
-        <div className="relative w-full md:w-48">
+        <div className="relative w-full md:w-52">
           <select
-            className="w-full bg-white border border-brand-gray/30 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime appearance-none pr-10"
+            className="w-full bg-white border border-brand-gray/30 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime appearance-none pr-10 truncate"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
