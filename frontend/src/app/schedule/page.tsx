@@ -312,11 +312,11 @@ const SchedulePage = () => {
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="bg-white rounded-3xl p-4 max-w-[90%] w-full max-h-[70vh] overflow-y-auto"
+            className="bg-white rounded-3xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-bold text-brand-black break-words">{selectedTask.title}</h3>
+              <h3 className="text-xl font-bold text-brand-black break-words">{selectedTask.title}</h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="text-brand-gray hover:text-brand-black ml-2"
@@ -329,14 +329,14 @@ const SchedulePage = () => {
             {selectedTask.description && (
               <div className="mb-4">
                 <h4 className="text-sm font-semibold text-brand-gray mb-1">Description</h4>
-                <p className="text-brand-black text-sm break-words">{selectedTask.description}</p>
+                <p className="text-brand-black">{selectedTask.description}</p>
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <h4 className="text-sm font-semibold text-brand-gray mb-1">Time</h4>
-                <p className="text-brand-black text-sm">
+                <p className="text-brand-black">
                   {selectedTask.due_date || selectedTask.dueDate
                     ? new Date(selectedTask.due_date || selectedTask.dueDate!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     : 'Not set'}
@@ -350,7 +350,7 @@ const SchedulePage = () => {
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-brand-gray mb-1">Date</h4>
-                <p className="text-brand-black text-sm">
+                <p className="text-brand-black">
                   {selectedTask.due_date || selectedTask.dueDate
                     ? new Date(selectedTask.due_date || selectedTask.dueDate!).toLocaleDateString()
                     : 'Not set'}
@@ -358,13 +358,13 @@ const SchedulePage = () => {
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-brand-gray mb-1">Status</h4>
-                <p className="text-brand-black text-sm">{selectedTask.completed ? 'Completed' : 'Pending'}</p>
+                <p className="text-brand-black">{selectedTask.completed ? 'Completed' : 'Pending'}</p>
               </div>
             </div>
 
             <div className="pt-4 border-t border-gray-100">
               <h4 className="text-sm font-semibold text-brand-gray mb-2">Created</h4>
-              <p className="text-brand-black text-sm">
+              <p className="text-brand-black">
                 {selectedTask.createdAt
                   ? new Date(selectedTask.createdAt).toLocaleDateString()
                   : 'Unknown'}
