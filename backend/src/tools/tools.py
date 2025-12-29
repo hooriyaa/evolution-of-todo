@@ -47,6 +47,27 @@ def parse_natural_date(date_str: str) -> datetime:
 
         return now.replace(hour=hour, minute=minute, second=0, microsecond=0)
 
+    # Parse "MM/DD/YYYY HH:MM AM/PM" format (e.g., "1/9/2026 09:48 AM")
+    date_match = re.search(r'(\d{1,2})/(\d{1,2})/(\d{4})\s+(\d{1,2}):(\d{2})\s*(am|pm)', date_str)
+    if date_match:
+        month = int(date_match.group(1))
+        day = int(date_match.group(2))
+        year = int(date_match.group(3))
+        hour = int(date_match.group(4))
+        minute = int(date_match.group(5))
+        am_pm = date_match.group(6)
+
+        if am_pm == 'pm' and hour != 12:
+            hour += 12
+        elif am_pm == 'am' and hour == 12:
+            hour = 0
+
+        try:
+            return datetime(year, month, day, hour, minute)
+        except ValueError:
+            # If the date is invalid (e.g., Feb 30), return None
+            pass
+
     # For other cases, try to parse as ISO format or return None
     try:
         # Try parsing as ISO format if it looks like a date
