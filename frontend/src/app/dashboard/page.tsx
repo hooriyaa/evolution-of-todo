@@ -20,6 +20,7 @@ export default function DashboardPage(): JSX.Element {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [sortBy, setSortBy] = useState('newest'); // Default: Newest created
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
 
@@ -215,11 +216,29 @@ export default function DashboardPage(): JSX.Element {
             </svg>
           </div>
         </div>
+
+        <div className="relative w-full md:w-48">
+          <select
+            className="w-full bg-white border border-brand-gray/30 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime appearance-none pr-10"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="newest" className="hover:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">Newest Created</option>
+            <option value="date_asc" className="focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">Due Date: Soonest</option>
+            <option value="date_desc" className="focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">Due Date: Latest</option>
+            <option value="priority" className="focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">Priority: High to Low</option>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-brand-gray">
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+            </svg>
+          </div>
+        </div>
       </div>
 
       {error && <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">{error}</div>}
 
-      {/* Filter the tasks based on search query and selected category */}
+      {/* Filter and sort the tasks based on search query, selected category, and sort option */}
       {(() => {
         const filteredTasks = tasks.filter(task => {
           const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -228,11 +247,38 @@ export default function DashboardPage(): JSX.Element {
           return matchesSearch && matchesCategory;
         });
 
+        // Define priority order for sorting
+        const priorityOrder: { [key: string]: number } = { "Urgent": 3, "Work": 2, "Personal": 1, "Design": 1 };
+
+        // Sort the filtered tasks based on the selected sort option
+        const sortedTasks = [...filteredTasks].sort((a, b) => {
+          if (sortBy === 'date_asc') {
+            // Sort by due date: Soonest first
+            if (!a.due_date) return 1; // Tasks without due date go last
+            if (!b.due_date) return -1;
+            return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+          }
+          if (sortBy === 'date_desc') {
+            // Sort by due date: Latest first
+            if (!a.due_date) return 1; // Tasks without due date go last
+            if (!b.due_date) return -1;
+            return new Date(b.due_date).getTime() - new Date(a.due_date).getTime();
+          }
+          if (sortBy === 'priority') {
+            // Sort by priority: High to Low
+            const aPriority = a.category ? priorityOrder[a.category] || 0 : 0;
+            const bPriority = b.category ? priorityOrder[b.category] || 0 : 0;
+            return bPriority - aPriority;
+          }
+          // Default: Newest first (by ID)
+          return Number(b.id) - Number(a.id);
+        });
+
         return (
           <div className="grid grid-cols-1 gap-4 sm:gap-6">
-            {filteredTasks.length > 0 ? (
+            {sortedTasks.length > 0 ? (
               <AnimatePresence>
-                {filteredTasks.map((task, index) => (
+                {sortedTasks.map((task, index) => (
                   <motion.div
                     key={task.id}
                     initial={{ opacity: 0, y: 20 }}
