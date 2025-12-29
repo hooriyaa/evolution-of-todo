@@ -47,9 +47,15 @@ export const Sidebar = ({ userId }: SidebarProps) => {
       {/* Sidebar */}
       <aside
         className={`fixed md:relative z-40 h-screen bg-gradient-to-b from-gray-900 to-black text-gray-400 p-6 rounded-r-3xl border-r border-white/10 transform transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 w-64`}
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 w-64 max-w-xs md:w-64`}
       >
-        <div className="flex flex-row items-center gap-0 mb-8 px-2">
+        <div className="flex md:hidden justify-between items-center mb-8">
+          <div className="flex flex-row items-center gap-2">
+            <Image src={logo} width={40} height={40} alt="Logo" />
+            <h1 className="text-lg font-bold text-white tracking-tight">Todo App</h1>
+          </div>
+        </div>
+        <div className="hidden md:flex flex-row items-center gap-2 mb-8">
           <Image src={logo} width={60} height={60} alt="Logo" />
           <h1 className="text-xl font-bold text-white tracking-tight">Todo App</h1>
         </div>
