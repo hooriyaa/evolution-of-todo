@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Menu, X, LogOut, LayoutDashboard, Settings, Calendar } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, Settings, Calendar, BarChart2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -76,6 +76,22 @@ export const Sidebar = ({ userId }: SidebarProps) => {
                 )}
                 <LayoutDashboard size={20} className="w-5 h-5 mr-3" />
                 <span>Dashboard</span>
+              </Link>
+            </li>
+            <li className="mb-2 relative">
+              <Link
+                href="/analytics"
+                className={`flex items-center p-3 rounded-xl transition-all duration-300 ease-in-out hover:pl-4 ${
+                  isActiveLink('/analytics')
+                    ? 'bg-white/10 backdrop-blur-md text-white font-bold'
+                    : 'hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {isActiveLink('/analytics') && (
+                  <span className="absolute left-1 w-1 h-8 bg-brand-lime rounded-full"></span>
+                )}
+                <BarChart2 size={20} className="w-5 h-5 mr-3" />
+                <span>Analytics</span>
               </Link>
             </li>
             <li className="mb-2 relative">
