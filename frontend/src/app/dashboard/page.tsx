@@ -23,33 +23,42 @@ export default function DashboardPage(): JSX.Element {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [sortBy, setSortBy] = useState('newest'); // Default: Newest created
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const notifiedTasksRef = useRef<Map<number, { notifiedAt15: boolean, notifiedAt10: boolean, notifiedAt5: boolean }>>(new Map());
+  const notifiedTasksRef = useRef<Map<number, { notifiedAt15: boolean, notifiedAt10: boolean, notifiedAt5: boolean, notifiedAt2: boolean }>>(new Map());
   const reminderIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Function to play notification sound
   const playNotificationSound = () => {
     try {
-      // Create audio context and generate a beep sound
+      // Create audio context and generate a more prominent beep sound
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
 
-      const oscillator = audioContext.createOscillator();
+      // Create two oscillators for a richer sound
+      const oscillator1 = audioContext.createOscillator();
+      const oscillator2 = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
 
-      oscillator.connect(gainNode);
+      oscillator1.connect(gainNode);
+      oscillator2.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      oscillator.type = 'sine';
-      oscillator.frequency.value = 800; // 800 Hz tone
-      gainNode.gain.value = 0.3; // 30% volume
+      // Set different frequencies for a more noticeable sound
+      oscillator1.type = 'sine';
+      oscillator1.frequency.value = 1000; // Higher frequency
+      oscillator2.type = 'sine';
+      oscillator2.frequency.value = 1300; // Higher frequency for harmony
+
+      gainNode.gain.value = 0.5; // Increase volume to 50%
 
       // Configure the fade in/out to avoid clicking sounds
       const now = audioContext.currentTime;
       gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01); // Fade in
-      gainNode.gain.linearRampToValueAtTime(0, now + 0.3); // Fade out after 300ms
+      gainNode.gain.linearRampToValueAtTime(0.5, now + 0.01); // Fade in quickly
+      gainNode.gain.linearRampToValueAtTime(0, now + 0.5); // Fade out after 500ms
 
-      oscillator.start();
-      oscillator.stop(now + 0.3); // Stop after 300ms
+      oscillator1.start();
+      oscillator2.start();
+      oscillator1.stop(now + 0.5); // Stop after 500ms
+      oscillator2.stop(now + 0.5); // Stop after 500ms
     } catch (e) {
       console.log("Audio play failed:", e);
     }
@@ -142,7 +151,7 @@ export default function DashboardPage(): JSX.Element {
       if (diffInMinutes > 0) {
         // Check if we've already notified about this task at specific intervals
         const taskId = Number(task.id);
-        const notifiedTask = notifiedTasksRef.current.get(taskId) || { notifiedAt15: false, notifiedAt10: false, notifiedAt5: false };
+        const notifiedTask = notifiedTasksRef.current.get(taskId) || { notifiedAt15: false, notifiedAt10: false, notifiedAt5: false, notifiedAt2: false };
 
         // Send notification 15 minutes before due (when between 14:01 and 15:00 minutes remaining)
         if (diffInMinutes <= 15 && diffInMinutes > 14 && !notifiedTask.notifiedAt15) {
@@ -181,6 +190,21 @@ export default function DashboardPage(): JSX.Element {
 
           new Notification(`Reminder: ${task.title}`, {
             body: "This task is due in 5 minutes!",
+            icon: "/favicon.ico",
+            requireInteraction: true
+          });
+
+          // Play notification sound
+          playNotificationSound();
+        }
+
+        // Send notification 2 minutes before due (when between 1:01 and 2:00 minutes remaining)
+        if (diffInMinutes <= 2 && diffInMinutes > 1 && !notifiedTask.notifiedAt2) {
+          notifiedTask.notifiedAt2 = true;
+          notifiedTasksRef.current.set(taskId, notifiedTask);
+
+          new Notification(`Reminder: ${task.title}`, {
+            body: "This task is due in 2 minutes!",
             icon: "/favicon.ico",
             requireInteraction: true
           });

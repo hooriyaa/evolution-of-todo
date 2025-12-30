@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 
@@ -134,8 +135,11 @@ Current User ID: {user_id}
 
                     if function_name == "add_task":
                         result = add_task(session, **function_args)
-                        # Format due date for display
-                        due_date_str = result.due_date.strftime('%Y-%m-%d %H:%M') if result.due_date else 'Not set'
+                        # Format due date for display in AM/PM format
+                        if result.due_date:
+                            due_date_str = result.due_date.strftime('%Y-%m-%d %I:%M %p')
+                        else:
+                            due_date_str = 'Not set'
                         description_str = result.description if result.description else 'Not provided'
                         category_str = result.category if result.category else 'None'
                         return f"Task '{result.title}' added! Category: {category_str} | Due: {due_date_str} | Desc: {description_str}"
@@ -144,8 +148,11 @@ Current User ID: {user_id}
                         if tasks:
                             task_list = []
                             for task in tasks:
-                                # Format due date for display
-                                due_date_str = task.due_date.strftime('%Y-%m-%d %H:%M') if task.due_date else 'Not set'
+                                # Format due date for display in AM/PM format
+                                if task.due_date:
+                                    due_date_str = task.due_date.strftime('%Y-%m-%d %I:%M %p')
+                                else:
+                                    due_date_str = 'Not set'
                                 description_str = task.description if task.description else 'Not provided'
                                 task_info = f"- ID: {task.id} | Title: {task.title} | Status: {'completed' if task.completed else 'pending'} | Due: {due_date_str} | Desc: {description_str}"
                                 task_list.append(task_info)
