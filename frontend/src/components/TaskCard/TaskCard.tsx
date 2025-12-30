@@ -78,12 +78,12 @@ export const TaskCard = ({ task, onToggleComplete, onDelete, onEdit }: TaskCardP
                   const dateValue = task.dueDate || task.due_date;
                   if (dateValue) {
                     // Fix: Ensure the browser treats this as UTC so it converts to Local Time
-                    const safeDateString = dateValue.endsWith('Z') ? dateValue : `${dateValue}Z`;
+                    const safeDateString = typeof dateValue === 'string' && dateValue.endsWith('Z') ? dateValue : `${dateValue}Z`;
 
                     const date = new Date(safeDateString);
 
                     // Double Check: If the date is invalid, fallback to original string
-                    if (isNaN(date.getTime())) return dateValue;
+                    if (isNaN(date.getTime())) return typeof dateValue === 'string' ? dateValue : "Invalid Date";
 
                     return date.toLocaleString('en-US', {
                       month: 'numeric',
