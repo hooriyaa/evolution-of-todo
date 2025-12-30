@@ -23,16 +23,24 @@ export default function DashboardPage(): JSX.Element {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [sortBy, setSortBy] = useState('newest'); // Default: Newest created
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const notifiedTasksRef = useRef<Map<number, { notifiedAt15: boolean, notifiedAt10: boolean, notifiedAt5: boolean, notifiedAt2: boolean }>>(new Map());
+  const notifiedTasksRef = useRef<Map<number, { notifiedAt15: boolean, notifiedAt10: boolean, notifiedAt5: boolean, notifiedAt2: boolean, soundPlayedAt15: boolean, soundPlayedAt10: boolean, soundPlayedAt5: boolean, soundPlayedAt2: boolean }>>(new Map());
   const reminderIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // State to track which alarms are playing
+  const [playingAlarms, setPlayingAlarms] = useState<Set<number>>(new Set());
+
   // Function to play notification sound
-  const playNotificationSound = () => {
+  const playNotificationSound = (taskId: number) => {
+    // Check if this task already has an alarm playing
+    if (playingAlarms.has(taskId)) {
+      return; // Don't start another alarm for the same task
+    }
+
     try {
-      // Create audio context and generate a more prominent beep sound
+      // Create audio context and generate a beeping alarm sound
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
 
-      // Create two oscillators for a richer sound
+      // Create oscillators for the alarm sound
       const oscillator1 = audioContext.createOscillator();
       const oscillator2 = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
@@ -47,20 +55,62 @@ export default function DashboardPage(): JSX.Element {
       oscillator2.type = 'sine';
       oscillator2.frequency.value = 1300; // Higher frequency for harmony
 
-      gainNode.gain.value = 0.5; // Increase volume to 50%
-
-      // Configure the fade in/out to avoid clicking sounds
+      // Create a beeping pattern by modulating the gain
       const now = audioContext.currentTime;
-      gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(0.5, now + 0.01); // Fade in quickly
-      gainNode.gain.linearRampToValueAtTime(0, now + 0.5); // Fade out after 500ms
+      gainNode.gain.setValueAtTime(0, now); // Start silent
 
+      // Create a beeping pattern: beep for 0.3s, pause for 0.3s
+      let time = now;
+      for (let i = 0; i < 100; i++) { // Repeat for a long time
+        // Beep phase (0.3 seconds)
+        gainNode.gain.setValueAtTime(0.3, time);
+        gainNode.gain.setValueAtTime(0.3, time + 0.3);
+        // Pause phase (0.3 seconds)
+        gainNode.gain.setValueAtTime(0, time + 0.3);
+        gainNode.gain.setValueAtTime(0, time + 0.6);
+        time += 0.6; // Next cycle
+      }
+
+      // Start the oscillators
       oscillator1.start();
       oscillator2.start();
-      oscillator1.stop(now + 0.5); // Stop after 500ms
-      oscillator2.stop(now + 0.5); // Stop after 500ms
+
+      // Add the task ID to the playing alarms set
+      setPlayingAlarms(prev => new Set(prev).add(taskId));
+
+      // Store references to stop the alarm later
+      (window as any).alarmRefs = (window as any).alarmRefs || {};
+      (window as any).alarmRefs[taskId] = {
+        audioContext,
+        oscillators: [oscillator1, oscillator2],
+        gainNode,
+        stop: () => {
+          try {
+            // Stop the oscillators
+            oscillator1.stop();
+            oscillator2.stop();
+          } catch (e) {
+            // Ignore errors if oscillators are already stopped
+          }
+          // Remove from playing alarms
+          setPlayingAlarms(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(taskId);
+            return newSet;
+          });
+        }
+      };
     } catch (e) {
       console.log("Audio play failed:", e);
+    }
+  };
+
+  // Function to stop an alarm for a specific task
+  const stopAlarm = (taskId: number) => {
+    const alarmRef = (window as any).alarmRefs?.[taskId];
+    if (alarmRef) {
+      alarmRef.stop();
+      delete (window as any).alarmRefs[taskId];
     }
   };
   const router = useRouter();
@@ -126,8 +176,13 @@ export default function DashboardPage(): JSX.Element {
       if (reminderIntervalRef.current) {
         clearInterval(reminderIntervalRef.current);
       }
+
+      // Stop all playing alarms when component unmounts
+      playingAlarms.forEach(taskId => {
+        stopAlarm(taskId);
+      });
     };
-  }, [notificationsEnabled, tasks]);
+  }, [notificationsEnabled, tasks, playingAlarms]);
 
   // Function to check for upcoming tasks and send notifications
   const checkReminders = () => {
@@ -151,66 +206,94 @@ export default function DashboardPage(): JSX.Element {
       if (diffInMinutes > 0) {
         // Check if we've already notified about this task at specific intervals
         const taskId = Number(task.id);
-        const notifiedTask = notifiedTasksRef.current.get(taskId) || { notifiedAt15: false, notifiedAt10: false, notifiedAt5: false, notifiedAt2: false };
+        const notifiedTask = notifiedTasksRef.current.get(taskId) || { notifiedAt15: false, notifiedAt10: false, notifiedAt5: false, notifiedAt2: false, soundPlayedAt15: false, soundPlayedAt10: false, soundPlayedAt5: false, soundPlayedAt2: false };
 
         // Send notification 15 minutes before due (when between 14:01 and 15:00 minutes remaining)
         if (diffInMinutes <= 15 && diffInMinutes > 14 && !notifiedTask.notifiedAt15) {
           notifiedTask.notifiedAt15 = true;
+          notifiedTask.soundPlayedAt15 = true;
           notifiedTasksRef.current.set(taskId, notifiedTask);
 
-          new Notification(`Reminder: ${task.title}`, {
+          // Create notification with event to stop alarm when closed
+          const notification = new Notification(`Reminder: ${task.title}`, {
             body: "This task is due in 15 minutes!",
             icon: "/favicon.ico",
             requireInteraction: true
           });
 
-          // Play notification sound
-          playNotificationSound();
+          // Play notification sound that loops until stopped
+          playNotificationSound(taskId);
+
+          // Stop alarm when notification is closed by user
+          notification.onclose = () => {
+            stopAlarm(taskId);
+          };
         }
 
         // Send notification 10 minutes before due (when between 9:01 and 10:00 minutes remaining)
         if (diffInMinutes <= 10 && diffInMinutes > 9 && !notifiedTask.notifiedAt10) {
           notifiedTask.notifiedAt10 = true;
+          notifiedTask.soundPlayedAt10 = true;
           notifiedTasksRef.current.set(taskId, notifiedTask);
 
-          new Notification(`Reminder: ${task.title}`, {
+          // Create notification with event to stop alarm when closed
+          const notification = new Notification(`Reminder: ${task.title}`, {
             body: "This task is due in 10 minutes!",
             icon: "/favicon.ico",
             requireInteraction: true
           });
 
-          // Play notification sound
-          playNotificationSound();
+          // Play notification sound that loops until stopped
+          playNotificationSound(taskId);
+
+          // Stop alarm when notification is closed by user
+          notification.onclose = () => {
+            stopAlarm(taskId);
+          };
         }
 
         // Send notification 5 minutes before due (when between 4:01 and 5:00 minutes remaining)
         if (diffInMinutes <= 5 && diffInMinutes > 4 && !notifiedTask.notifiedAt5) {
           notifiedTask.notifiedAt5 = true;
+          notifiedTask.soundPlayedAt5 = true;
           notifiedTasksRef.current.set(taskId, notifiedTask);
 
-          new Notification(`Reminder: ${task.title}`, {
+          // Create notification with event to stop alarm when closed
+          const notification = new Notification(`Reminder: ${task.title}`, {
             body: "This task is due in 5 minutes!",
             icon: "/favicon.ico",
             requireInteraction: true
           });
 
-          // Play notification sound
-          playNotificationSound();
+          // Play notification sound that loops until stopped
+          playNotificationSound(taskId);
+
+          // Stop alarm when notification is closed by user
+          notification.onclose = () => {
+            stopAlarm(taskId);
+          };
         }
 
         // Send notification 2 minutes before due (when between 1:01 and 2:00 minutes remaining)
         if (diffInMinutes <= 2 && diffInMinutes > 1 && !notifiedTask.notifiedAt2) {
           notifiedTask.notifiedAt2 = true;
+          notifiedTask.soundPlayedAt2 = true;
           notifiedTasksRef.current.set(taskId, notifiedTask);
 
-          new Notification(`Reminder: ${task.title}`, {
+          // Create notification with event to stop alarm when closed
+          const notification = new Notification(`Reminder: ${task.title}`, {
             body: "This task is due in 2 minutes!",
             icon: "/favicon.ico",
             requireInteraction: true
           });
 
-          // Play notification sound
-          playNotificationSound();
+          // Play notification sound that loops until stopped
+          playNotificationSound(taskId);
+
+          // Stop alarm when notification is closed by user
+          notification.onclose = () => {
+            stopAlarm(taskId);
+          };
         }
       }
     });
