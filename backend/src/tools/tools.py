@@ -18,6 +18,27 @@ def parse_natural_date(date_str: str) -> datetime:
     # Handle relative dates
     now = datetime.now()
 
+    # Parse "day after tomorrow at 5pm" format
+    day_after_tomorrow_match = re.search(r'day after tomorrow at (\d{1,2})(?::(\d{2}))?\s*(am|pm)?', date_str)
+    if day_after_tomorrow_match:
+        hour = int(day_after_tomorrow_match.group(1))
+        minute = int(day_after_tomorrow_match.group(2)) if day_after_tomorrow_match.group(2) else 0
+        am_pm = day_after_tomorrow_match.group(3)
+
+        if am_pm == 'pm' and hour != 12:
+            hour += 12
+        elif am_pm == 'am' and hour == 12:
+            hour = 0
+
+        # Day after tomorrow at the specified time
+        return now.replace(day=now.day + 2, hour=hour, minute=minute, second=0, microsecond=0)
+
+    # Parse "day after tomorrow" without specific time
+    day_after_tomorrow_simple_match = re.search(r'day after tomorrow', date_str)
+    if day_after_tomorrow_simple_match:
+        # Day after tomorrow at 12:00 AM (start of the day)
+        return now.replace(day=now.day + 2, hour=0, minute=0, second=0, microsecond=0)
+
     # Parse "tomorrow at 5pm" format
     tomorrow_match = re.search(r'tomorrow at (\d{1,2})(?::(\d{2}))?\s*(am|pm)?', date_str)
     if tomorrow_match:
