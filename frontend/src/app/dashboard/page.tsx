@@ -23,8 +23,37 @@ export default function DashboardPage(): JSX.Element {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [sortBy, setSortBy] = useState('newest'); // Default: Newest created
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const notifiedTasksRef = useRef<Set<number>>(new Set());
+  const notifiedTasksRef = useRef<Map<number, { notifiedAt15: boolean, notifiedAt10: boolean, notifiedAt5: boolean }>>(new Map());
   const reminderIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Function to play notification sound
+  const playNotificationSound = () => {
+    try {
+      // Create audio context and generate a beep sound
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 800; // 800 Hz tone
+      gainNode.gain.value = 0.3; // 30% volume
+
+      // Configure the fade in/out to avoid clicking sounds
+      const now = audioContext.currentTime;
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01); // Fade in
+      gainNode.gain.linearRampToValueAtTime(0, now + 0.3); // Fade out after 300ms
+
+      oscillator.start();
+      oscillator.stop(now + 0.3); // Stop after 300ms
+    } catch (e) {
+      console.log("Audio play failed:", e);
+    }
+  };
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
 
@@ -75,10 +104,10 @@ export default function DashboardPage(): JSX.Element {
         clearInterval(reminderIntervalRef.current);
       }
 
-      // Set up new interval to check reminders every 60 seconds
+      // Set up new interval to check reminders every 10 seconds for faster testing
       reminderIntervalRef.current = setInterval(() => {
         checkReminders();
-      }, 60000); // 60 seconds
+      }, 10000); // 10 seconds
 
       // Run check immediately on mount
       checkReminders();
@@ -95,38 +124,69 @@ export default function DashboardPage(): JSX.Element {
   const checkReminders = () => {
     if (!notificationsEnabled) return;
 
-    const now = new Date();
-    const fifteenMinutesInMs = 15 * 60 * 1000; // 15 minutes in milliseconds
+    const now = new Date().getTime();
 
     tasks.forEach(task => {
       // Skip if task is completed or doesn't have a due date
       if (task.completed || !task.due_date) return;
 
-      // Parse the due date
-      const taskDueDate = new Date(task.due_date);
+      // Safe parsing logic - treat the string as UTC to convert to user's local time
+      const rawDate = task.due_date;
+      const safeDate = typeof rawDate === 'string' && rawDate.endsWith('Z') ? rawDate : `${rawDate}Z`;
+      const taskTime = new Date(safeDate).getTime();
 
-      // Calculate the difference in milliseconds
-      const timeDiff = taskDueDate.getTime() - now.getTime();
+      // Calculate the difference in minutes
+      const diffInMinutes = (taskTime - now) / 1000 / 60;
 
-      // Check if the task is due within the next 15 minutes but not in the past
-      if (timeDiff > 0 && timeDiff <= fifteenMinutesInMs) {
-        // Check if we've already notified about this task
-        if (!notifiedTasksRef.current.has(Number(task.id))) {
-          // Mark this task as notified
-          notifiedTasksRef.current.add(Number(task.id));
+      // Check for multiple reminder intervals: 15, 10, and 5 minutes before due
+      if (diffInMinutes > 0) {
+        // Check if we've already notified about this task at specific intervals
+        const taskId = Number(task.id);
+        const notifiedTask = notifiedTasksRef.current.get(taskId) || { notifiedAt15: false, notifiedAt10: false, notifiedAt5: false };
 
-          // Create and show notification
-          const notification = new Notification(`Reminder: ${task.title}`, {
-            body: "This task is due soon!",
-            icon: "/favicon.ico"
+        // Send notification 15 minutes before due (when between 14:01 and 15:00 minutes remaining)
+        if (diffInMinutes <= 15 && diffInMinutes > 14 && !notifiedTask.notifiedAt15) {
+          notifiedTask.notifiedAt15 = true;
+          notifiedTasksRef.current.set(taskId, notifiedTask);
+
+          new Notification(`Reminder: ${task.title}`, {
+            body: "This task is due in 15 minutes!",
+            icon: "/favicon.ico",
+            requireInteraction: true
           });
 
-          // Optional: Clear the notification after 5 seconds
-          setTimeout(() => {
-            if (notification) {
-              notification.close();
-            }
-          }, 5000);
+          // Play notification sound
+          playNotificationSound();
+        }
+
+        // Send notification 10 minutes before due (when between 9:01 and 10:00 minutes remaining)
+        if (diffInMinutes <= 10 && diffInMinutes > 9 && !notifiedTask.notifiedAt10) {
+          notifiedTask.notifiedAt10 = true;
+          notifiedTasksRef.current.set(taskId, notifiedTask);
+
+          new Notification(`Reminder: ${task.title}`, {
+            body: "This task is due in 10 minutes!",
+            icon: "/favicon.ico",
+            requireInteraction: true
+          });
+
+          // Play notification sound
+          playNotificationSound();
+        }
+
+        // Send notification 5 minutes before due (when between 4:01 and 5:00 minutes remaining)
+        if (diffInMinutes <= 5 && diffInMinutes > 4 && !notifiedTask.notifiedAt5) {
+          notifiedTask.notifiedAt5 = true;
+          notifiedTasksRef.current.set(taskId, notifiedTask);
+
+          new Notification(`Reminder: ${task.title}`, {
+            body: "This task is due in 5 minutes!",
+            icon: "/favicon.ico",
+            requireInteraction: true
+          });
+
+          // Play notification sound
+          playNotificationSound();
         }
       }
     });
