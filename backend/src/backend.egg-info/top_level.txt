@@ -8,4 +8,5 @@ manager
 models
 routes
 schemas
+seed
 tools

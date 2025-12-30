@@ -77,10 +77,24 @@ export const TaskCard = ({ task, onToggleComplete, onDelete, onEdit }: TaskCardP
                 {(() => {
                   const dateValue = task.dueDate || task.due_date;
                   if (dateValue) {
-                    const date = new Date(dateValue);
-                    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                    // Fix: Ensure the browser treats this as UTC so it converts to Local Time
+                    const safeDateString = dateValue.endsWith('Z') ? dateValue : `${dateValue}Z`;
+
+                    const date = new Date(safeDateString);
+
+                    // Double Check: If the date is invalid, fallback to original string
+                    if (isNaN(date.getTime())) return dateValue;
+
+                    return date.toLocaleString('en-US', {
+                      month: 'numeric',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true,
+                    });
                   }
-                  return null;
+                  return "No Due Date";
                 })()}
               </span>
             )}

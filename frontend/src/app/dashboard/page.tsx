@@ -1,9 +1,9 @@
 // frontend/src/app/dashboard/page.tsx
 "use client";
 
-import { useEffect, useState, JSX } from "react";
+import { useEffect, useState, useRef, JSX } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react"; // optional; remove if not installed
+import { Plus, Bell, BellOff } from "lucide-react"; // optional; remove if not installed
 import apiClient from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/Button/Button";
@@ -22,6 +22,9 @@ export default function DashboardPage(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [sortBy, setSortBy] = useState('newest'); // Default: Newest created
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const notifiedTasksRef = useRef<Set<number>>(new Set());
+  const reminderIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
 
@@ -36,6 +39,98 @@ export default function DashboardPage(): JSX.Element {
       fetchTasks();
     }
   }, [user, authLoading, router]);
+
+  // Request notification permission and set up reminder system
+  useEffect(() => {
+    const setupNotifications = async () => {
+      if (!("Notification" in window)) {
+        console.log("Browser does not support notifications");
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        setNotificationsEnabled(true);
+        console.log("Notification permission granted");
+      } else {
+        console.log("Notification permission denied or dismissed");
+      }
+    };
+
+    setupNotifications();
+
+    // Clean up interval on unmount
+    return () => {
+      if (reminderIntervalRef.current) {
+        clearInterval(reminderIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Set up reminder checking interval
+  useEffect(() => {
+    if (notificationsEnabled && tasks.length > 0) {
+      // Clear any existing interval
+      if (reminderIntervalRef.current) {
+        clearInterval(reminderIntervalRef.current);
+      }
+
+      // Set up new interval to check reminders every 60 seconds
+      reminderIntervalRef.current = setInterval(() => {
+        checkReminders();
+      }, 60000); // 60 seconds
+
+      // Run check immediately on mount
+      checkReminders();
+    }
+
+    return () => {
+      if (reminderIntervalRef.current) {
+        clearInterval(reminderIntervalRef.current);
+      }
+    };
+  }, [notificationsEnabled, tasks]);
+
+  // Function to check for upcoming tasks and send notifications
+  const checkReminders = () => {
+    if (!notificationsEnabled) return;
+
+    const now = new Date();
+    const fifteenMinutesInMs = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+    tasks.forEach(task => {
+      // Skip if task is completed or doesn't have a due date
+      if (task.completed || !task.due_date) return;
+
+      // Parse the due date
+      const taskDueDate = new Date(task.due_date);
+
+      // Calculate the difference in milliseconds
+      const timeDiff = taskDueDate.getTime() - now.getTime();
+
+      // Check if the task is due within the next 15 minutes but not in the past
+      if (timeDiff > 0 && timeDiff <= fifteenMinutesInMs) {
+        // Check if we've already notified about this task
+        if (!notifiedTasksRef.current.has(Number(task.id))) {
+          // Mark this task as notified
+          notifiedTasksRef.current.add(Number(task.id));
+
+          // Create and show notification
+          const notification = new Notification(`Reminder: ${task.title}`, {
+            body: "This task is due soon!",
+            icon: "/favicon.ico"
+          });
+
+          // Optional: Clear the notification after 5 seconds
+          setTimeout(() => {
+            if (notification) {
+              notification.close();
+            }
+          }, 5000);
+        }
+      }
+    });
+  };
 
   const fetchTasks = async () => {
     if (!user) return;
@@ -155,7 +250,20 @@ export default function DashboardPage(): JSX.Element {
   return (
     <div className="max-w-4xl mx-auto w-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <h1 className="text-2xl font-bold text-brand-black pl-16 md:pl-0">My Tasks</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold text-brand-black pl-16 md:pl-0">My Tasks</h1>
+          {notificationsEnabled ? (
+            <div className="flex items-center gap-2 text-sm text-green-600" title="Notifications Active">
+              <Bell className="w-5 h-5" />
+              <span>Notifications Active</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-gray-500" title="Notifications Disabled">
+              <BellOff className="w-5 h-5" />
+              <span>Notifications Disabled</span>
+            </div>
+          )}
+        </div>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <Button
             onClick={() => {

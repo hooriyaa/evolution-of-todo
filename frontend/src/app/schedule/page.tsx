@@ -19,17 +19,37 @@ const SchedulePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
-  // Helper function to compare if two dates are the same day, ignoring time and timezone
+  // Helper function to compare if two dates are the same day, handling timezone properly
   const isSameDay = (date1: Date | string, date2: Date | string) => {
-    // Convert to strings if they're Date objects, or use as is if already strings
-    const date1Str = typeof date1 === 'string' ? date1 : date1.toISOString();
-    const date2Str = typeof date2 === 'string' ? date2 : date2.toISOString();
+    // Handle null/undefined values
+    if (!date1 || !date2) {
+      return false;
+    }
 
-    // Extract just the date part (YYYY-MM-DD)
-    const date1Part = date1Str.split('T')[0];
-    const date2Part = date2Str.split('T')[0];
+    // Create date objects and normalize to just the date part (ignoring time and timezone)
+    const normalizeDate = (dateInput: Date | string): Date => {
+      if (typeof dateInput === 'string') {
+        // If it's a date string, create a new Date object
+        // If it's in ISO format with time, we'll extract just the date part
+        const date = new Date(dateInput);
+        // Create a new date object with just the year, month, and day
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      } else {
+        // If it's already a Date object, extract just the date part
+        return new Date(dateInput.getFullYear(), dateInput.getMonth(), dateInput.getDate());
+      }
+    };
 
-    return date1Part === date2Part;
+    const normalizedDate1 = normalizeDate(date1);
+    const normalizedDate2 = normalizeDate(date2);
+
+    // Handle potential invalid dates
+    if (isNaN(normalizedDate1.getTime()) || isNaN(normalizedDate2.getTime())) {
+      return false;
+    }
+
+    // Compare the normalized dates
+    return normalizedDate1.getTime() === normalizedDate2.getTime();
   };
 
   // Check auth status on mount
@@ -87,7 +107,9 @@ const SchedulePage = () => {
     for (let i = 0; i < 7; i++) {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
-      dates.push(date.toISOString().split('T')[0]);
+      // Format to YYYY-MM-DD to ensure consistency
+      const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      dates.push(formattedDate);
     }
 
     setDateRange(dates);
@@ -225,9 +247,9 @@ const SchedulePage = () => {
         </div>
 
         <div className="space-y-4">
-          {/* Timeline from 8 AM to 8 PM */}
-          {Array.from({ length: 13 }, (_, i) => {
-            const hour = i + 8; // Start from 8 AM
+          {/* Timeline for all 24 hours */}
+          {Array.from({ length: 24 }, (_, i) => {
+            const hour = i; // Start from 0 (12 AM) to 23 (11 PM)
             // Find tasks for that hour
             const tasksForHour = tasks.filter(t => {
               // Use due_date if available, otherwise fallback to dueDate
@@ -235,20 +257,26 @@ const SchedulePage = () => {
               if (!taskDueDate) {
                 return false;
               }
+
               // Check if the task's date matches the selected date using helper function
               const isSameDate = isSameDay(taskDueDate, selectedDate);
+
               // Check if the task's hour matches the current hour
               const taskDate = new Date(taskDueDate);
               const taskHour = taskDate.getHours();
-              const result = isSameDate && taskHour === hour;
-              return result;
+              const isSameHour = taskHour === hour;
+
+              return isSameDate && isSameHour;
             });
 
             return (
               <div key={hour} className="flex flex-col sm:flex-row">
                 <div className="w-full sm:w-20 flex-shrink-0 pt-1 mb-2 sm:mb-0">
                   <span className="text-sm text-brand-gray">
-                    {hour > 12 ? `${hour - 12} PM` : `${hour} AM`}
+                    {hour === 0 ? '12 AM' :
+                     hour < 12 ? `${hour} AM` :
+                     hour === 12 ? '12 PM' :
+                     `${hour - 12} PM`}
                   </span>
                 </div>
                 <div className="flex-1 ml-0 sm:ml-4">

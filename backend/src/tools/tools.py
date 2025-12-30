@@ -72,7 +72,19 @@ def parse_natural_date(date_str: str) -> datetime:
     try:
         # Try parsing as ISO format if it looks like a date
         if 't' in date_str:  # Likely ISO format
-            return datetime.fromisoformat(date_str.replace('z', '+00:00'))
+            # Parse as naive datetime (without timezone) to preserve the user's intended time
+            # Remove timezone info if present to avoid conversion
+            dt = datetime.fromisoformat(date_str.replace('z', '').replace('Z', ''))
+            return dt
+    except ValueError:
+        pass
+
+    # Handle the format from frontend (YYYY-MM-DD HH:MM:SS)
+    try:
+        # Format is like "2025-12-30 14:30:00"
+        if '-' in date_str and len(date_str) == 19 and date_str.count(':') == 2:
+            dt = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+            return dt
     except ValueError:
         pass
 

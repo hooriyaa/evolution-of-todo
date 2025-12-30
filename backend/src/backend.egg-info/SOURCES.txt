@@ -6,6 +6,7 @@ src/main.py
 src/manager.py
 src/models.py
 src/schemas.py
+src/seed.py
 src/agents/agent.py
 src/backend.egg-info/PKG-INFO
 src/backend.egg-info/SOURCES.txt

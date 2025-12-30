@@ -71,7 +71,8 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, initialData }: TaskFormPro
       title: title.trim(),
       description: description.trim(),
       // Send null for due_date if not provided, not empty string
-      due_date: dueDate && dueDate.trim() !== "" ? new Date(dueDate).toISOString() : null,
+      // Format date to preserve user's local time without timezone conversion
+      due_date: dueDate && dueDate.trim() !== "" ? new Date(dueDate).toISOString().slice(0, 19).replace('T', ' ') : null,
       // Ensure category defaults to "Personal" if not provided
       category: category || "Personal"
     };
