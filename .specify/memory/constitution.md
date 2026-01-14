@@ -40,6 +40,9 @@ AI features must be implemented using Google Gemini API through the defined agen
 ### Security & Performance Standards
 All inputs must be validated and sanitized to prevent injection attacks. Implement proper authentication and authorization for all endpoints. Use HTTPS in production. Optimize database queries to prevent performance bottlenecks. Implement proper error handling without exposing sensitive information. For urgent projects, security must never be compromised for speed of delivery.
 
+### Containerization & Orchestration Standards (Phase 4)
+For Kubernetes deployment, all services must be containerized using Docker. Frontend and backend applications must have separate Docker images. Use multi-stage builds for optimized images. Store sensitive data (database URLs, API keys) in Kubernetes Secrets, not in environment variables or image layers. Implement proper resource limits and requests for containers. Use Kubernetes best practices for deployments, services, and networking.
+
 ## Additional Requirements
 All components must be testable in isolation. Performance requirements include responsive web interactions with no noticeable lag. Security considerations include input validation, protection against injection attacks, secure authentication, and proper data sanitization. During urgent development, maintain a security-first approach.
 
@@ -49,4 +52,4 @@ All code submissions must include corresponding tests. Spec-Driven: Updates must
 ## Governance
 Constitution supersedes all other practices. Amendments require formal documentation and approval. All PRs/reviews must verify compliance with constitution principles. Breaking changes must follow semantic versioning. During urgent project phases, maintain flexibility while adhering to core principles.
 
-**Version**: 2.1.0 | **Ratified**: 2025-12-06 | **Last Amended**: 2025-12-29
+**Version**: 2.2.0 | **Ratified**: 2025-12-06 | **Last Amended**: 2026-01-08

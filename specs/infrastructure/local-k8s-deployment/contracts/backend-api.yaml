@@ -1,0 +1,131 @@
+# Backend API Contract
+
+## Overview
+This document defines the API contract for the Todo App backend service, which will be deployed as part of the local Kubernetes setup.
+
+## Base URL
+In the Kubernetes environment, the backend service will be accessible internally at:
+- `http://backend-service:8000`
+
+For external access through the ingress, it will be accessible at:
+- `http://todo.local/api`
+
+## Endpoints
+
+### Health Check Endpoints
+These endpoints are required for Kubernetes health checks.
+
+#### GET /health
+**Purpose**: Check if the application is running
+**Response**: 
+- 200 OK with `{"status": "healthy"}` if the application is running
+- 503 Service Unavailable if the application is not healthy
+
+#### GET /ready
+**Purpose**: Check if the application is ready to receive traffic
+**Response**:
+- 200 OK with `{"status": "ready"}` if the application is ready
+- 503 Service Unavailable if the application is not ready
+
+### Todo Management Endpoints
+These endpoints handle the core functionality of the Todo application.
+
+#### GET /api/todos
+**Purpose**: Retrieve all todos for the authenticated user
+**Headers**:
+- Authorization: Bearer {token}
+**Response**:
+- 200 OK with array of todo items
+- 401 Unauthorized if not authenticated
+
+#### POST /api/todos
+**Purpose**: Create a new todo item
+**Headers**:
+- Authorization: Bearer {token}
+**Body**: 
+```json
+{
+  "title": "string",
+  "description": "string",
+  "completed": "boolean"
+}
+```
+**Response**:
+- 201 Created with the created todo item
+- 400 Bad Request if validation fails
+- 401 Unauthorized if not authenticated
+
+#### GET /api/todos/{id}
+**Purpose**: Retrieve a specific todo item by ID
+**Headers**:
+- Authorization: Bearer {token}
+**Response**:
+- 200 OK with the todo item
+- 401 Unauthorized if not authenticated
+- 404 Not Found if the todo doesn't exist
+
+#### PUT /api/todos/{id}
+**Purpose**: Update a specific todo item by ID
+**Headers**:
+- Authorization: Bearer {token}
+**Body**:
+```json
+{
+  "title": "string",
+  "description": "string",
+  "completed": "boolean"
+}
+```
+**Response**:
+- 200 OK with the updated todo item
+- 400 Bad Request if validation fails
+- 401 Unauthorized if not authenticated
+- 404 Not Found if the todo doesn't exist
+
+#### DELETE /api/todos/{id}
+**Purpose**: Delete a specific todo item by ID
+**Headers**:
+- Authorization: Bearer {token}
+**Response**:
+- 204 No Content on successful deletion
+- 401 Unauthorized if not authenticated
+- 404 Not Found if the todo doesn't exist
+
+### Authentication Endpoints
+These endpoints handle user authentication.
+
+#### POST /api/auth/register
+**Purpose**: Register a new user
+**Body**:
+```json
+{
+  "email": "string",
+  "password": "string"
+}
+```
+**Response**:
+- 201 Created with user information
+- 400 Bad Request if validation fails
+- 409 Conflict if user already exists
+
+#### POST /api/auth/login
+**Purpose**: Authenticate a user and return a token
+**Body**:
+```json
+{
+  "email": "string",
+  "password": "string"
+}
+```
+**Response**:
+- 200 OK with authentication token
+- 400 Bad Request if validation fails
+- 401 Unauthorized if credentials are invalid
+
+#### POST /api/auth/logout
+**Purpose**: Log out the current user
+**Headers**:
+- Authorization: Bearer {token}
+**Response**:
+- 200 OK on successful logout
+- 401 Unauthorized if not authenticated
