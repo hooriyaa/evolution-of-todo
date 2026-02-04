@@ -63,7 +63,7 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, initialData }: TaskFormPro
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title.trim()) {
@@ -96,18 +96,28 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, initialData }: TaskFormPro
     // Explicitly log the payload before sending as required by the fix
     console.log("PAYLOAD SENDING:", payload);
 
-    // Pass the properly formatted payload to the parent component
-    onSubmit(payload as Omit<Task, 'id' | 'completed' | 'createdAt' | 'updatedAt'>);
+    try {
+      // Pass the properly formatted payload to the parent component
+      await onSubmit(payload as Omit<Task, 'id' | 'completed' | 'createdAt' | 'updatedAt'>);
 
-    // Reset form after submission
-    setTitle('');
-    setDescription('');
-    setDueDate('');
-    setCategory('');
-    setPriority('medium');
-    setTags('');
-    setIsRecurring(false);
-    setRecurringRule('');
+      // Reset form after submission
+      setTitle('');
+      setDescription('');
+      setDueDate('');
+      setCategory('');
+      setPriority('medium');
+      setTags('');
+      setIsRecurring(false);
+      setRecurringRule('');
+
+      // Close the modal after a short delay to allow the parent component to handle the submission
+      setTimeout(() => {
+        onClose();
+      }, 100);
+    } catch (error) {
+      console.error("Error saving task:", error);
+      setError('Failed to save task. Please try again.');
+    }
   };
 
   const handleClose = () => {
@@ -126,7 +136,7 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, initialData }: TaskFormPro
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="bg-brand-card rounded-3xl shadow-sm w-full max-w-md">
+      <div className="bg-brand-card rounded-3xl shadow-sm w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-4 border-b border-slate-200">
           <h2 className="text-lg font-semibold text-brand-black">
             {initialData ? 'Edit Task' : 'Add New Task'}

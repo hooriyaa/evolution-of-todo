@@ -26,18 +26,32 @@ const SchedulePage = () => {
       return false;
     }
 
-    // Create date objects and normalize to just the date part (ignoring time and timezone)
+    // Create date objects and normalize to just the date part (ignoring time)
     const normalizeDate = (dateInput: Date | string): Date => {
+      let date: Date;
+
       if (typeof dateInput === 'string') {
-        // If it's a date string, create a new Date object
-        // If it's in ISO format with time, we'll extract just the date part
-        const date = new Date(dateInput);
-        // Create a new date object with just the year, month, and day
-        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        // If it's a date string with time (ISO format), we need to handle it carefully
+        // to preserve the intended date in the user's local timezone
+        if (dateInput.includes('T')) {
+          // This is an ISO string with time, create a Date object directly
+          date = new Date(dateInput);
+        } else {
+          // This is just a date string (YYYY-MM-DD), treat it as start of day in local timezone
+          date = new Date(dateInput + 'T00:00:00');
+        }
       } else {
-        // If it's already a Date object, extract just the date part
-        return new Date(dateInput.getFullYear(), dateInput.getMonth(), dateInput.getDate());
+        // If it's already a Date object
+        date = dateInput;
       }
+
+      // Extract the date components in the user's local timezone
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const day = date.getDate();
+
+      // Create a new date object with just the year, month, and day in local timezone
+      return new Date(year, month, day);
     };
 
     const normalizedDate1 = normalizeDate(date1);
@@ -125,12 +139,32 @@ const SchedulePage = () => {
         return false;
       }
 
-      // Check if the task's date matches the selected date using helper function
-      const isSameDate = isSameDay(taskDueDate, date);
+      // Create date objects for comparison
+      let taskDate: Date;
+      if (typeof taskDueDate === 'string') {
+        taskDate = new Date(taskDueDate);
+      } else {
+        taskDate = taskDueDate;
+      }
 
-      // Check if the task's hour matches the current hour
-      // We still need to convert to date object to get the hour
-      const taskDate = new Date(taskDueDate);
+      // Extract date components for the task date in local timezone
+      const taskYear = taskDate.getFullYear();
+      const taskMonth = taskDate.getMonth(); // Month is 0-indexed
+      const taskDay = taskDate.getDate();
+
+      // Extract date components for the selected date
+      const [year, month, day] = date.split('-').map(Number);
+      const selectedDateObj = new Date(year, month - 1, day); // Month is 0-indexed
+      const selectedYear = selectedDateObj.getFullYear();
+      const selectedMonth = selectedDateObj.getMonth();
+      const selectedDay = selectedDateObj.getDate();
+
+      // Check if the dates match
+      const isSameDate = taskYear === selectedYear &&
+                         taskMonth === selectedMonth &&
+                         taskDay === selectedDay;
+
+      // Check if the hour matches
       const taskHour = taskDate.getHours();
       const isSameHour = taskHour === hour;
 
@@ -258,11 +292,32 @@ const SchedulePage = () => {
                 return false;
               }
 
-              // Check if the task's date matches the selected date using helper function
-              const isSameDate = isSameDay(taskDueDate, selectedDate);
+              // Create date objects for comparison
+              let taskDate: Date;
+              if (typeof taskDueDate === 'string') {
+                taskDate = new Date(taskDueDate);
+              } else {
+                taskDate = taskDueDate;
+              }
 
-              // Check if the task's hour matches the current hour
-              const taskDate = new Date(taskDueDate);
+              // Extract date components for the task date in local timezone
+              const taskYear = taskDate.getFullYear();
+              const taskMonth = taskDate.getMonth(); // Month is 0-indexed
+              const taskDay = taskDate.getDate();
+
+              // Extract date components for the selected date
+              const [year, month, day] = selectedDate.split('-').map(Number);
+              const selectedDateObj = new Date(year, month - 1, day); // Month is 0-indexed
+              const selectedYear = selectedDateObj.getFullYear();
+              const selectedMonth = selectedDateObj.getMonth();
+              const selectedDay = selectedDateObj.getDate();
+
+              // Check if the dates match
+              const isSameDate = taskYear === selectedYear &&
+                                 taskMonth === selectedMonth &&
+                                 taskDay === selectedDay;
+
+              // Check if the hour matches
               const taskHour = taskDate.getHours();
               const isSameHour = taskHour === hour;
 
@@ -288,6 +343,8 @@ const SchedulePage = () => {
                         let timeString = '';
                         if (taskDueDate) {
                           const date = new Date(taskDueDate);
+
+                          // Get the time in the user's local timezone
                           const hours = date.getHours();
                           const minutes = date.getMinutes().toString().padStart(2, '0');
                           const ampm = hours >= 12 ? 'PM' : 'AM';

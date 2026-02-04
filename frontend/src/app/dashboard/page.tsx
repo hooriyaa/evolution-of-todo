@@ -359,7 +359,6 @@ export default function DashboardPage(): JSX.Element {
 
       const res = await apiClient.post('/api/tasks', formattedTaskData);
       setTasks((prev) => [...prev, res.data]);
-      setShowTaskForm(false);
     } catch (err: any) {
       console.error("Error adding task:", err);
       setError(err.message || "Failed to add task");
@@ -372,7 +371,6 @@ export default function DashboardPage(): JSX.Element {
       const res = await apiClient.put(`/api/tasks/${editingTask.id}`, taskData);
       setTasks((prev) => prev.map((t) => (t.id === editingTask.id ? res.data : t)));
       setEditingTask(null);
-      setShowTaskForm(false);
     } catch (err: any) {
       console.error("Error updating task:", err);
       setError(err.message || "Failed to update task");
@@ -646,9 +644,14 @@ export default function DashboardPage(): JSX.Element {
           setEditingTask(null);
         }}
         onSubmit={async (payload) => {
-          if (editingTask) await handleUpdateTask(payload as Partial<Task>);
-          else await handleAddTask({ ...payload, completed: false } as Omit<Task, "id" | "created_at" | "updated_at" | "user_id">);
-          setShowTaskForm(false);
+          if (editingTask) {
+            await handleUpdateTask(payload as Partial<Task>);
+            window.location.reload(); // Refresh the page to show updated task
+          }
+          else {
+            await handleAddTask({ ...payload, completed: false } as Omit<Task, "id" | "created_at" | "updated_at" | "user_id">);
+            window.location.reload(); // Refresh the page to show added task
+          }
         }}
         initialData={editingTask ? { ...editingTask, description: editingTask.description ?? undefined } : undefined}
       />
