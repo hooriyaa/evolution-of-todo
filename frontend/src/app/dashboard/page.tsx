@@ -21,6 +21,7 @@ export default function DashboardPage(): JSX.Element {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [selectedPriority, setSelectedPriority] = useState<string>("All"); // New: Filter by priority
   const [sortBy, setSortBy] = useState('newest'); // Default: Newest created
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const notifiedTasksRef = useRef<Map<number, { notifiedAt15: boolean, notifiedAt10: boolean, notifiedAt5: boolean, notifiedAt2: boolean, soundPlayedAt15: boolean, soundPlayedAt10: boolean, soundPlayedAt5: boolean, soundPlayedAt2: boolean }>>(new Map());
@@ -127,6 +128,13 @@ export default function DashboardPage(): JSX.Element {
       fetchTasks();
     }
   }, [user, authLoading, router]);
+
+  // Fetch tasks when filters change
+  useEffect(() => {
+    if (user) {
+      fetchTasks();
+    }
+  }, [user, selectedPriority, searchQuery, sortBy]);
 
   // Request notification permission and set up reminder system
   useEffect(() => {
@@ -304,7 +312,24 @@ export default function DashboardPage(): JSX.Element {
 
     try {
       setLoading(true);
-      const res = await apiClient.get('/api/tasks');
+      // Build query parameters based on current filters
+      const queryParams = new URLSearchParams();
+      if (selectedPriority !== "All") {
+        queryParams.append('priority', selectedPriority);
+      }
+      if (searchQuery) {
+        queryParams.append('search', searchQuery);
+      }
+      if (sortBy === 'priority') {
+        queryParams.append('sort_by', 'priority');
+      } else if (sortBy.startsWith('date')) {
+        queryParams.append('sort_by', 'due_date');
+      }
+
+      const queryString = queryParams.toString();
+      const url = `/api/tasks${queryString ? '?' + queryString : ''}`;
+
+      const res = await apiClient.get(url);
       setTasks(res.data ?? []);
       setError(null);
     } catch (err: any) {
@@ -499,6 +524,24 @@ export default function DashboardPage(): JSX.Element {
         <div className="relative w-full md:w-72">
           <select
             className="w-full bg-white border border-brand-gray/30 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime appearance-none pr-10 truncate"
+            value={selectedPriority}
+            onChange={(e) => setSelectedPriority(e.target.value)}
+          >
+            <option value="All" className="hover:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">All Priorities</option>
+            <option value="high" className="focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">High</option>
+            <option value="medium" className="focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">Medium</option>
+            <option value="low" className="focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime">Low</option>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-brand-gray">
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="relative w-full md:w-72">
+          <select
+            className="w-full bg-white border border-brand-gray/30 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-brand-lime hover:border-brand-lime appearance-none pr-10 truncate"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
@@ -523,11 +566,13 @@ export default function DashboardPage(): JSX.Element {
           const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()));
           const matchesCategory = selectedCategory === "All" || task.category === selectedCategory;
-          return matchesSearch && matchesCategory;
+          const matchesPriority = selectedPriority === "All" || task.priority === selectedPriority;
+          return matchesSearch && matchesCategory && matchesPriority;
         });
 
         // Define priority order for sorting
         const priorityOrder: { [key: string]: number } = { "Urgent": 3, "Work": 2, "Personal": 1, "Design": 1 };
+        const priorityLevel: { [key: string]: number } = { "high": 3, "medium": 2, "low": 1 };
 
         // Sort the filtered tasks based on the selected sort option
         const sortedTasks = [...filteredTasks].sort((a, b) => {
@@ -545,9 +590,15 @@ export default function DashboardPage(): JSX.Element {
           }
           if (sortBy === 'priority') {
             // Sort by priority: High to Low
-            const aPriority = a.category ? priorityOrder[a.category] || 0 : 0;
-            const bPriority = b.category ? priorityOrder[b.category] || 0 : 0;
-            return bPriority - aPriority;
+            const aPriority = a.priority ? priorityLevel[a.priority] || 0 : 0;
+            const bPriority = b.priority ? priorityLevel[b.priority] || 0 : 0;
+            if (bPriority !== aPriority) {
+              return bPriority - aPriority; // Sort by priority first
+            }
+            // If priorities are equal, sort by due date
+            if (!a.due_date) return 1;
+            if (!b.due_date) return -1;
+            return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
           }
           // Default: Newest first (by ID)
           return Number(b.id) - Number(a.id);

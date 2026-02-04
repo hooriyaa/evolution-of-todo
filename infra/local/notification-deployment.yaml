@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-notification
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-notification
+  template:
+    metadata:
+      labels:
+        app: todo-notification
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "notification-service"
+        dapr.io/app-port: "8001"
+        dapr.io/config: "appconfig"
+    spec:
+      containers:
+      - name: todo-notification
+        image: todo-notification:latest
+        ports:
+        - containerPort: 8001
+        imagePullPolicy: Never  # Since we build locally
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-notification-service
+spec:
+  selector:
+    app: todo-notification
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8001
+  type: ClusterIP  # Internal service only

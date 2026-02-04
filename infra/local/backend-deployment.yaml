@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-backend
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-backend
+  template:
+    metadata:
+      labels:
+        app: todo-backend
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "backend"
+        dapr.io/app-port: "8000"
+        dapr.io/config: "appconfig" # Optional, standard config
+        dapr.io/sidecar-listen-addresses: "0.0.0.0" # Listen on all interfaces
+    spec:
+      containers:
+      - name: todo-backend
+        image: todo-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://postgres:postgres@postgres:5432/todo"
+        - name: DAPR_GRPC_PORT
+          value: "50001"
+        - name: OPENAI_API_KEY
+          value: "sk--placeholder-key-for-testing"
+        imagePullPolicy: Never  # Since we build locally
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-backend-service
+  namespace: default
+spec:
+  selector:
+    app: todo-backend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: LoadBalancer  # Allows external access to the service

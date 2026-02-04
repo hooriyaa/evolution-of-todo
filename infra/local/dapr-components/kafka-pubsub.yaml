@@ -1,0 +1,21 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: kafka-pubsub
+  namespace: default
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: "redpanda.kafka.svc.cluster.local:9093"
+  - name: authRequired
+    value: "false"
+  - name: consumerGroup
+    value: "default"
+  - name: clientID
+    value: "dapr-kafka-client"
+  - name: maxMessageBytes
+    value: "1048576"
+  - name: consumeRetryInterval
+    value: "200ms"

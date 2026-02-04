@@ -20,10 +20,10 @@ app = FastAPI(
 
 # CORS Setup
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:3000")],
+CORSMiddleware,
+    allow_origins=["*"],  # <--- Star '*' ka matlab sab allow
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 

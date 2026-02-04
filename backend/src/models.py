@@ -1,6 +1,12 @@
 from sqlmodel import SQLModel, Field, Column, DateTime, Text, Relationship
 from typing import Optional, List
 from datetime import datetime
+from enum import Enum
+
+class PriorityEnum(str, Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
 
 class User(SQLModel, table=True):
     """
@@ -15,7 +21,6 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
-
 class TaskBase(SQLModel):
     title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = Field(sa_column=Column(Text))
@@ -23,6 +28,10 @@ class TaskBase(SQLModel):
     user_id: int  # This will now reference our User.id
     due_date: Optional[datetime] = Field(sa_column=Column(DateTime))
     category: Optional[str] = Field(default=None, max_length=50)
+    priority: PriorityEnum = Field(default=PriorityEnum.medium)
+    tags: Optional[str] = Field(default=None)  # Comma-separated tags or JSON string
+    is_recurring: bool = Field(default=False)
+    recurring_rule: Optional[str] = Field(default=None)  # e.g., "daily", "weekly"
 
 
 class Task(TaskBase, table=True):

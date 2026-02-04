@@ -6,6 +6,7 @@ from ..models import Task, User
 from ..schemas import TaskCreate, TaskUpdate, TaskResponse
 from ..auth import get_current_user
 from ..db import get_db
+from ..dapr_client import publish_event
 import logging
 
 # Set up logging
@@ -18,7 +19,9 @@ router = APIRouter(prefix="/api", tags=["tasks"])
 @router.get("/tasks", response_model=List[TaskResponse])
 def get_tasks(
     status: Optional[str] = Query(None, description="Filter by status (pending/completed)"),
-    sort: Optional[str] = Query(None, description="Sort by (created/title)"),
+    priority: Optional[str] = Query(None, description="Filter by priority (low/medium/high)"),
+    search: Optional[str] = Query(None, description="Search in title/description"),
+    sort_by: Optional[str] = Query(None, description="Sort by (due_date/priority)"),
     due_date_from: Optional[datetime] = Query(None, description="Filter tasks from this date"),
     due_date_to: Optional[datetime] = Query(None, description="Filter tasks until this date"),
     category: Optional[str] = Query(None, description="Filter by category"),
@@ -26,7 +29,7 @@ def get_tasks(
     session: Session = Depends(get_db)
 ):
     """
-    Fetch tasks for the current user with optional filtering by status, due date, and category
+    Fetch tasks for the current user with optional filtering by status, due date, category, priority, and search
     """
     # Build query
     query = select(Task).where(Task.user_id == current_user.id)
@@ -40,6 +43,18 @@ def get_tasks(
         else:
             raise HTTPException(status_code=400, detail="Invalid status parameter. Use 'completed' or 'pending'")
 
+    # Apply priority filter
+    if priority:
+        if priority.lower() in ["low", "medium", "high"]:
+            query = query.where(Task.priority == priority.lower())
+        else:
+            raise HTTPException(status_code=400, detail="Invalid priority parameter. Use 'low', 'medium', or 'high'")
+
+    # Apply search filter
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.where((Task.title.ilike(search_pattern)) | (Task.description.ilike(search_pattern)))
+
     # Apply due date filters
     if due_date_from:
         query = query.where(Task.due_date >= due_date_from)
@@ -51,16 +66,21 @@ def get_tasks(
         query = query.where(Task.category == category)
 
     # Apply sorting
-    if sort:
-        if sort.lower() == "title":
-            query = query.order_by(Task.title)
-        elif sort.lower() == "created":
-            query = query.order_by(Task.created_at)
-        elif sort.lower() == "due_date":
+    if sort_by:
+        if sort_by.lower() == "due_date":
             query = query.order_by(Task.due_date)
+        elif sort_by.lower() == "priority":
+            query = query.order_by(Task.priority)
+        elif sort_by.lower() == "title":
+            query = query.order_by(Task.title)
+        elif sort_by.lower() == "created":
+            query = query.order_by(Task.created_at)
         else:
             # For any other value, default to created_at
             query = query.order_by(Task.created_at)
+    else:
+        # Default sorting if no sort parameter provided
+        query = query.order_by(Task.created_at)
 
     tasks = session.exec(query).all()
     return tasks
@@ -82,12 +102,30 @@ def create_task(
         user_id=current_user.id,  # Use the authenticated user's ID
         completed=task_data.completed,
         due_date=task_data.due_date,
-        category=task_data.category
+        category=task_data.category,
+        priority=task_data.priority,
+        tags=task_data.tags,
+        is_recurring=task_data.is_recurring,
+        recurring_rule=task_data.recurring_rule
     )
 
     session.add(task)
     session.commit()
     session.refresh(task)
+
+    # Publish event to Dapr
+    try:
+        event_data = {
+            "event_type": "created",
+            "task_id": task.id,
+            "task_title": task.title,
+            "user_id": task.user_id,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        publish_event(event_data)
+    except Exception as e:
+        # Log the error but don't raise it to ensure API request still succeeds
+        logger.error(f"Failed to publish task created event: {str(e)}")
 
     return task
 
@@ -121,7 +159,7 @@ def update_task(
     session: Session = Depends(get_db)
 ):
     """
-    Update task fields including due_date and category
+    Update task fields including due_date, category, priority, tags, and recurring fields
     """
     task = session.get(Task, task_id)
 
@@ -131,6 +169,9 @@ def update_task(
     # Verify that the task belongs to the user - fix type mismatch
     if str(task.user_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Forbidden: access denied")
+
+    # Store original values for the event
+    original_title = task.title
 
     # Update the task with provided values
     update_data = task_update.dict(exclude_unset=True)
@@ -143,6 +184,21 @@ def update_task(
     session.add(task)
     session.commit()
     session.refresh(task)
+
+    # Publish event to Dapr
+    try:
+        event_data = {
+            "event_type": "updated",
+            "task_id": task.id,
+            "task_title": task.title,
+            "original_title": original_title,
+            "user_id": task.user_id,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        publish_event(event_data)
+    except Exception as e:
+        # Log the error but don't raise it to ensure API request still succeeds
+        logger.error(f"Failed to publish task updated event: {str(e)}")
 
     return task
 
@@ -165,8 +221,26 @@ def delete_task(
     if str(task.user_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Forbidden: access denied")
 
+    # Store values for the event before deletion
+    task_title = task.title
+    user_id = task.user_id
+
     session.delete(task)
     session.commit()
+
+    # Publish event to Dapr
+    try:
+        event_data = {
+            "event_type": "deleted",
+            "task_id": task_id,
+            "task_title": task_title,
+            "user_id": user_id,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        publish_event(event_data)
+    except Exception as e:
+        # Log the error but don't raise it to ensure API request still succeeds
+        logger.error(f"Failed to publish task deleted event: {str(e)}")
 
     return {"message": "Task deleted successfully"}
 
@@ -193,6 +267,9 @@ def toggle_task_completion(
         logger.error(f"User {current_user.id} trying to access task {task_id} belonging to user {task.user_id}")
         raise HTTPException(status_code=403, detail="Forbidden: access denied")
 
+    # Store original completion status for the event
+    original_completed_status = task.completed
+
     # Toggle completion status
     task.completed = not task.completed
     task.updated_at = datetime.now()
@@ -202,5 +279,21 @@ def toggle_task_completion(
     session.refresh(task)
 
     logger.info(f"Successfully toggled task {task_id} completion status to {task.completed}")
+
+    # Publish event to Dapr
+    try:
+        event_data = {
+            "event_type": "updated",
+            "task_id": task.id,
+            "task_title": task.title,
+            "original_completed_status": original_completed_status,
+            "new_completed_status": task.completed,
+            "user_id": task.user_id,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        publish_event(event_data)
+    except Exception as e:
+        # Log the error but don't raise it to ensure API request still succeeds
+        logger.error(f"Failed to publish task completion toggle event: {str(e)}")
 
     return task

@@ -31,6 +31,10 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, initialData }: TaskFormPro
   const [description, setDescription] = useState(initialData?.description || '');
   const [dueDate, setDueDate] = useState<string>(initialData?.dueDate ? formatDateForInput(initialData.dueDate) : '');
   const [category, setCategory] = useState(initialData?.category || '');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>(initialData?.priority || 'medium');
+  const [tags, setTags] = useState(initialData?.tags || '');
+  const [isRecurring, setIsRecurring] = useState(initialData?.is_recurring || false);
+  const [recurringRule, setRecurringRule] = useState(initialData?.recurring_rule || '');
   const [error, setError] = useState('');
 
   // Update form fields when initialData changes (for editing)
@@ -40,12 +44,20 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, initialData }: TaskFormPro
       setDescription(initialData.description || '');
       setDueDate(initialData.dueDate ? formatDateForInput(initialData.dueDate) : '');
       setCategory(initialData.category || '');
+      setPriority(initialData.priority || 'medium');
+      setTags(initialData.tags || '');
+      setIsRecurring(initialData.is_recurring || false);
+      setRecurringRule(initialData.recurring_rule || '');
     } else {
       // Reset form when no initial data is provided
       setTitle('');
       setDescription('');
       setDueDate('');
       setCategory('');
+      setPriority('medium');
+      setTags('');
+      setIsRecurring(false);
+      setRecurringRule('');
     }
   }, [initialData]);
 
@@ -74,7 +86,11 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, initialData }: TaskFormPro
       // Format date to preserve user's local time without timezone conversion
       due_date: dueDate && dueDate.trim() !== "" ? new Date(dueDate).toISOString().slice(0, 19).replace('T', ' ') : null,
       // Ensure category defaults to "Personal" if not provided
-      category: category || "Personal"
+      category: category || "Personal",
+      priority: priority,
+      tags: tags,
+      is_recurring: isRecurring,
+      recurring_rule: isRecurring ? recurringRule : null
     };
 
     // Explicitly log the payload before sending as required by the fix
@@ -88,6 +104,10 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, initialData }: TaskFormPro
     setDescription('');
     setDueDate('');
     setCategory('');
+    setPriority('medium');
+    setTags('');
+    setIsRecurring(false);
+    setRecurringRule('');
   };
 
   const handleClose = () => {
@@ -97,6 +117,10 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, initialData }: TaskFormPro
     setDescription(initialData?.description || '');
     setDueDate(initialData?.dueDate ? formatDateForInput(initialData.dueDate) : '');
     setCategory(initialData?.category || '');
+    setPriority(initialData?.priority || 'medium');
+    setTags(initialData?.tags || '');
+    setIsRecurring(initialData?.is_recurring || false);
+    setRecurringRule(initialData?.recurring_rule || '');
     onClose();
   };
 
@@ -165,6 +189,78 @@ export const TaskForm = ({ isOpen, onClose, onSubmit, initialData }: TaskFormPro
               className="w-full bg-white text-gray-900 border-gray-300 p-4 rounded-2xl focus:ring-2 focus:ring-brand-lime"
             />
           </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-brand-black mb-1">
+              Priority
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {(['low', 'medium', 'high'] as const).map((prio) => (
+                <label
+                  key={prio}
+                  className={`flex items-center px-3 py-2 rounded-full text-sm cursor-pointer ${
+                    priority === prio
+                      ? prio === 'low' ? 'bg-green-200 text-green-800'
+                        : prio === 'medium' ? 'bg-yellow-200 text-yellow-800'
+                        : 'bg-red-200 text-red-800' // high
+                      : 'bg-gray-100 text-brand-black hover:bg-gray-200'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="priority"
+                    value={prio}
+                    checked={priority === prio}
+                    onChange={() => setPriority(prio)}
+                    className="sr-only"
+                  />
+                  {prio.charAt(0).toUpperCase() + prio.slice(1)}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="tags" className="block text-sm font-medium text-brand-black mb-1">
+              Tags
+            </label>
+            <input
+              type="text"
+              id="tags"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              className="w-full bg-white text-gray-900 border-gray-300 p-4 rounded-2xl focus:ring-2 focus:ring-brand-lime"
+              placeholder="Enter tags separated by commas (e.g. work, urgent)"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isRecurring}
+                onChange={(e) => setIsRecurring(e.target.checked)}
+                className="form-checkbox h-4 w-4 text-brand-lime focus:ring-brand-lime"
+              />
+              <span className="text-sm font-medium text-brand-black">Recurring Task</span>
+            </label>
+          </div>
+
+          {isRecurring && (
+            <div className="mb-4">
+              <label htmlFor="recurringRule" className="block text-sm font-medium text-brand-black mb-1">
+                Recurring Rule
+              </label>
+              <input
+                type="text"
+                id="recurringRule"
+                value={recurringRule}
+                onChange={(e) => setRecurringRule(e.target.value)}
+                className="w-full bg-white text-gray-900 border-gray-300 p-4 rounded-2xl focus:ring-2 focus:ring-brand-lime"
+                placeholder="e.g. daily, weekly, monthly"
+              />
+            </div>
+          )}
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-brand-black mb-1">

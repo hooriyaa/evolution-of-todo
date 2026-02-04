@@ -1,6 +1,12 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from enum import Enum
+
+class PriorityEnum(str, Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
 
 # Request/Response models for API
 class TaskBase(BaseModel):
@@ -9,6 +15,10 @@ class TaskBase(BaseModel):
     completed: bool = False
     due_date: Optional[datetime] = None
     category: Optional[str] = None
+    priority: PriorityEnum = PriorityEnum.medium
+    tags: Optional[str] = None  # Comma-separated tags or JSON string
+    is_recurring: bool = False
+    recurring_rule: Optional[str] = None  # e.g., "daily", "weekly"
 
 
 class TaskCreate(TaskBase):
@@ -24,6 +34,10 @@ class TaskUpdate(BaseModel):
     completed: Optional[bool] = None
     due_date: Optional[datetime] = None
     category: Optional[str] = None
+    priority: Optional[PriorityEnum] = None
+    tags: Optional[str] = None
+    is_recurring: Optional[bool] = None
+    recurring_rule: Optional[str] = None
 
 
 class TaskResponse(TaskBase):

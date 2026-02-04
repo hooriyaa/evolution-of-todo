@@ -9,6 +9,10 @@ export interface Task {
   dueDate?: Date | string;  // Keep for compatibility with frontend usage
   due_date?: Date | string; // For API response compatibility
   category?: string;
+  priority?: 'low' | 'medium' | 'high';
+  tags?: string;
+  is_recurring?: boolean;
+  recurring_rule?: string | null;
 }
 
 export interface User {
@@ -29,4 +33,8 @@ export interface TaskFormValues {
   description?: string;
   dueDate?: Date | null;
   category?: string;
+  priority?: 'low' | 'medium' | 'high';
+  tags?: string;
+  is_recurring?: boolean;
+  recurring_rule?: string | null;
 }

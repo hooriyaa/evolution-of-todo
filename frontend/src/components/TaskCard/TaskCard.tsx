@@ -30,6 +30,43 @@ const getCategoryColor = (category: string | undefined) => {
   }
 };
 
+// Function to get priority color
+const getPriorityColor = (priority: string | undefined) => {
+  if (!priority) return 'bg-gray-300 text-black';
+
+  switch (priority) {
+    case 'low':
+      return 'bg-green-200 text-green-800';
+    case 'medium':
+      return 'bg-yellow-200 text-yellow-800';
+    case 'high':
+      return 'bg-red-200 text-red-800';
+    default:
+      return 'bg-gray-300 text-black';
+  }
+};
+
+// Function to render tags
+const renderTags = (tags: string | undefined) => {
+  if (!tags) return null;
+
+  // Split tags by comma and trim whitespace
+  const tagList = tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+
+  return (
+    <div className="flex flex-wrap gap-1 mt-1">
+      {tagList.map((tag, index) => (
+        <span
+          key={index}
+          className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full"
+        >
+          {tag}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 export const TaskCard = ({ task, onToggleComplete, onDelete, onEdit }: TaskCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -70,7 +107,7 @@ export const TaskCard = ({ task, onToggleComplete, onDelete, onEdit }: TaskCardP
             </p>
           )}
 
-          {/* Due date and category info */}
+          {/* Due date, priority, tags and category info */}
           <div className="flex flex-wrap gap-2 mt-2">
             {(task.dueDate || task.due_date) && (
               <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
@@ -98,11 +135,17 @@ export const TaskCard = ({ task, onToggleComplete, onDelete, onEdit }: TaskCardP
                 })()}
               </span>
             )}
+            {task.priority && (
+              <span className={`text-xs px-2 py-1 rounded-full ${getPriorityColor(task.priority)}`}>
+                {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+              </span>
+            )}
             {task.category && (
               <span className={`text-xs px-2 py-1 rounded-full ${getCategoryColor(task.category)}`}>
                 {task.category}
               </span>
             )}
+            {renderTags(task.tags)}
           </div>
 
           {/* Status Badge */}

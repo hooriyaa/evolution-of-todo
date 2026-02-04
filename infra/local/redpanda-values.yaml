@@ -1,0 +1,13 @@
+auth:
+  sasl:
+    enabled: false
+tls:
+  enabled: false
+statefulset:
+  replicas: 1
+resources:
+  cpu:
+    cores: 500m
+  memory:
+    container:
+      max: 1.5Gi
