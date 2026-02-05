@@ -22,12 +22,13 @@ backend:
     type: LoadBalancer
     port: 8000
   
-  # Environment variables for the backend application. Make sure to replace the dummy values with actual secrets in production.
+  # Environment variables for the backend application.
+  # ⚠️ SECRETS REMOVED: These are now empty. Pass them securely via Helm command or Kubernetes Secrets.
   env:
     - name: GEMINI_API_KEY
-      value: "AIzaSyDgnB2DEmUmczg_JF0HC1HgvIlvQwqiBhA" 
+      value: ""  # 👈 Key removed for security
     - name: GOOGLE_API_KEY
-      value: "AIzaSyDgnB2DEmUmczg_JF0HC1HgvIlvQwqiBhA" 
+      value: ""  # 👈 Key removed for security
     - name: DATABASE_URL
       value: "sqlite:///app/todo.db"
 
@@ -138,5 +139,5 @@ secrets:
   # These values will be used to create the Kubernetes secrets
   # They should be provided externally or generated during installation
   databaseUrl: "sqlite:///app/todo.db"
-  geminiApiKey: "AIzaSyDgnB2DEmUmczg_JF0HC1HgvIlvQwqiBhA"
+  geminiApiKey: "" # 👈 Key removed for security
   betterAuthSecret: "dummy-auth-secret"
