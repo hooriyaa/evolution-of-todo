@@ -1,35 +1,27 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Optional
 
 def convert_to_utc(dt: Optional[datetime]) -> Optional[datetime]:
     """
-    Convert a datetime from Pakistan Standard Time (PST) to UTC.
-    Pakistan Standard Time is UTC+5.
+    Simply add timezone info to a naive datetime without changing the time value.
+    This prevents any time shifting during storage.
     """
     if dt is None:
         return None
 
-    # If datetime is naive (no timezone info), assume it's in Pakistan Standard Time (PST = UTC+5)
+    # If datetime is naive (no timezone info), just add UTC timezone info without changing the time
     if dt.tzinfo is None:
-        # Convert Pakistan Standard Time (PST = UTC+5) to UTC by subtracting 5 hours
-        utc_time = dt - timedelta(hours=5)
-        return utc_time.replace(tzinfo=timezone.utc)
+        return dt.replace(tzinfo=timezone.utc)
     else:
         # If it already has timezone info, convert to UTC
         return dt.astimezone(timezone.utc)
 
 def convert_from_utc(dt: Optional[datetime]) -> Optional[datetime]:
     """
-    Convert a datetime from UTC to Pakistan Standard Time (for display purposes).
-    Pakistan Standard Time is UTC+5.
+    Return the datetime as-is, assuming it's already in the correct timezone.
     """
     if dt is None:
         return None
 
-    # If datetime is naive, assume it's in UTC
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-
-    # Convert from UTC to Pakistan Standard Time (PST = UTC+5) by adding 5 hours
-    pakistan_time = dt + timedelta(hours=5)
-    return pakistan_time
+    # Just return the datetime as-is
+    return dt
