@@ -22,9 +22,15 @@ app = FastAPI(
 # CORS Setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:3000")],
+    allow_origins=[
+        "http://localhost:3000",                    # Localhost (Testing ke liye)
+        "https://evolution-of-todo.vercel.app",     # ✅ Vercel Frontend (Ab ye chalega)
+        "https://evolution-of-todo.onrender.com",   # Render Backend (Self)
+        "http://104.40.93.29",                      # ✅ Azure Frontend (Ab ye bhi chalega)
+        "http://104.40.93.29:80"                    # Safety ke liye Port 80
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_methods=["*"],  # GET, POST, DELETE sab allow
     allow_headers=["*"],
 )
 # === ROUTERS REGISTRATION ===
@@ -56,3 +62,44 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "message": "Server is running"}
+
+
+@app.get("/fix-db-schema")
+def fix_db_schema():
+    """
+    Temporary endpoint to fix database schema by adding missing columns to the task table.
+    This endpoint should be removed after the schema is fixed.
+    """
+    from sqlmodel import text
+
+    # Define the SQL commands to add missing columns if they don't exist
+    alter_statements = [
+        "ALTER TABLE task ADD COLUMN IF NOT EXISTS priority VARCHAR DEFAULT 'Medium';",
+        "ALTER TABLE task ADD COLUMN IF NOT EXISTS tags VARCHAR;",
+        "ALTER TABLE task ADD COLUMN IF NOT EXISTS is_recurring BOOLEAN DEFAULT FALSE;",
+        "ALTER TABLE task ADD COLUMN IF NOT EXISTS recurring_rule VARCHAR;",
+        "ALTER TABLE task ADD COLUMN IF NOT EXISTS category VARCHAR DEFAULT 'General';"
+    ]
+
+    try:
+        with engine.connect() as connection:
+            for statement in alter_statements:
+                connection.execute(text(statement))
+            connection.commit()
+
+        return {
+            "status": "success",
+            "message": "Database schema updated successfully",
+            "details": {
+                "columns_added": [
+                    "priority (VARCHAR, Default 'Medium')",
+                    "tags (VARCHAR, Nullable)",
+                    "is_recurring (BOOLEAN, Default False)",
+                    "recurring_rule (VARCHAR, Nullable)",
+                    "category (VARCHAR, Default 'General')"
+                ]
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error updating database schema: {e}")
+        return {"status": "error", "message": str(e)}
