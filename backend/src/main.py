@@ -203,7 +203,7 @@ def fix_timezone_data():
     This endpoint should be removed after the timezone data is fixed.
     """
     from sqlmodel import Session
-    import pytz
+    from .utils import convert_to_utc
 
     try:
         with Session(engine) as session:
@@ -212,18 +212,10 @@ def fix_timezone_data():
 
             updated_count = 0
             for task in tasks:
-                # If the due date is naive (no timezone), assume it's in the user's local timezone
-                # and convert it to UTC for storage
+                # If the due date is naive (no timezone), convert it to UTC
                 if task.due_date and task.due_date.tzinfo is None:
-                    # Assuming the local timezone is Pakistan Standard Time (PKT)
-                    local_tz = pytz.timezone('Asia/Karachi')
-                    local_dt = local_tz.localize(task.due_date)
-
-                    # Convert to UTC
-                    utc_dt = local_dt.astimezone(pytz.UTC)
-
-                    # Update the task with the timezone-aware datetime
-                    task.due_date = utc_dt
+                    # Use our utility function to convert to UTC
+                    task.due_date = convert_to_utc(task.due_date)
                     updated_count += 1
 
             session.commit()
@@ -233,15 +225,6 @@ def fix_timezone_data():
             "message": f"Timezone data fixed for {updated_count} tasks",
             "details": {
                 "tasks_updated": updated_count
-            }
-        }
-    except ImportError:
-        # If pytz is not available, return an error message
-        return {
-            "status": "error",
-            "message": "pytz module not available. Please ensure it's installed.",
-            "details": {
-                "tasks_processed": 0
             }
         }
     except Exception as e:
