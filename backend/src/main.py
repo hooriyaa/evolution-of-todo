@@ -48,6 +48,17 @@ app.include_router(chat_router, prefix="/api/v1", tags=["chat"])
 def on_startup():
     logger.info("Starting up the application...")
     try:
+        # Temporarily fix the enum case issue before loading models
+        from sqlmodel import text
+        with engine.connect() as connection:
+            # Fix the priority case issue
+            connection.execute(text("UPDATE task SET priority = LOWER(priority) WHERE priority IN ('Medium', 'High', 'Low');"))
+            # Fix the default value
+            connection.execute(text("ALTER TABLE task ALTER COLUMN priority SET DEFAULT 'medium';"))
+            # Fix NULL categories
+            connection.execute(text("UPDATE task SET category = 'General' WHERE category IS NULL OR category = '';"))
+            connection.commit()
+
         SQLModel.metadata.create_all(bind=engine)
         logger.info("Database tables created successfully")
     except Exception as e:
@@ -158,17 +169,14 @@ def fix_priority_case():
     """
     from sqlmodel import text
 
-    # Define the SQL commands to fix priority case issues
-    update_statements = [
-        "UPDATE task SET priority = LOWER(priority);",  # Converts 'Medium' -> 'medium'
-        "ALTER TABLE task ALTER COLUMN priority SET DEFAULT 'medium';",  # Fixes the default for new tasks
-        "UPDATE task SET category = 'General' WHERE category IS NULL;"  # Cleanup
-    ]
-
     try:
         with engine.connect() as connection:
-            for statement in update_statements:
-                connection.execute(text(statement))
+            # Fix the priority case issue
+            connection.execute(text("UPDATE task SET priority = LOWER(priority) WHERE priority IN ('Medium', 'High', 'Low');"))
+            # Fix the default value
+            connection.execute(text("ALTER TABLE task ALTER COLUMN priority SET DEFAULT 'medium';"))
+            # Fix NULL categories
+            connection.execute(text("UPDATE task SET category = 'General' WHERE category IS NULL OR category = '';"))
             connection.commit()
 
         return {
