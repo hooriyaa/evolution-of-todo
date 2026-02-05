@@ -1,8 +1,9 @@
-from sqlmodel import SQLModel, Field, Column, DateTime, Text, Relationship
-from sqlalchemy import Index
+from sqlmodel import SQLModel, Field, Column, Text, Relationship
+from sqlalchemy import Index, DateTime
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+import pytz
 
 class PriorityEnum(str, Enum):
     low = "low"
@@ -30,7 +31,7 @@ class TaskBase(SQLModel):
     description: Optional[str] = Field(sa_column=Column(Text))
     completed: bool = Field(default=False)
     user_id: int  # This will now reference our User.id
-    due_date: Optional[datetime] = Field(sa_column=Column(DateTime))
+    due_date: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True)))
     category: Optional[str] = Field(default=None, max_length=50)
     priority: PriorityEnum = Field(default=PriorityEnum.medium)
     tags: Optional[str] = Field(default=None)  # Comma-separated tags or JSON string
@@ -53,8 +54,8 @@ class Task(TaskBase, table=True):
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(pytz.UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(pytz.UTC))
 
 
 class Conversation(SQLModel, table=True):

@@ -7,6 +7,7 @@ from ..schemas import TaskCreate, TaskUpdate, TaskResponse
 from ..auth import get_current_user
 from ..db import get_db
 from ..dapr_client import publish_event
+from ..utils import convert_to_utc
 import logging
 
 # Set up logging
@@ -57,9 +58,15 @@ def get_tasks(
 
     # Apply due date filters
     if due_date_from:
-        query = query.where(Task.due_date >= due_date_from)
+        # Convert to UTC for comparison
+        due_date_from_utc = convert_to_utc(due_date_from) if due_date_from else None
+        if due_date_from_utc:
+            query = query.where(Task.due_date >= due_date_from_utc)
     if due_date_to:
-        query = query.where(Task.due_date <= due_date_to)
+        # Convert to UTC for comparison
+        due_date_to_utc = convert_to_utc(due_date_to) if due_date_to else None
+        if due_date_to_utc:
+            query = query.where(Task.due_date <= due_date_to_utc)
 
     # Apply category filter
     if category:
@@ -95,13 +102,16 @@ def create_task(
     """
     Create a new task for the current user
     """
+    # Convert due_date to UTC if it exists
+    due_date_utc = convert_to_utc(task_data.due_date) if task_data.due_date else None
+
     # Create new task
     task = Task(
         title=task_data.title,
         description=task_data.description,
         user_id=current_user.id,  # Use the authenticated user's ID
         completed=task_data.completed,
-        due_date=task_data.due_date,
+        due_date=due_date_utc,
         category=task_data.category,
         priority=task_data.priority,
         tags=task_data.tags,
@@ -193,6 +203,9 @@ def update_task(
     # Update the task with provided values
     update_data = task_update.dict(exclude_unset=True)
     for field, value in update_data.items():
+        # Handle timezone conversion for due_date
+        if field == "due_date" and value is not None:
+            value = convert_to_utc(value)
         setattr(task, field, value)
 
     # Update the updated_at timestamp

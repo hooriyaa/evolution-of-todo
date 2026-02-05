@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from enum import Enum
+import pytz
 
 class PriorityEnum(str, Enum):
     low = "low"
@@ -45,6 +46,11 @@ class TaskResponse(TaskBase):
     user_id: int
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
+        }
 
 
 # Authentication models

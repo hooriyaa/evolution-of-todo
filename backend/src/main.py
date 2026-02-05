@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, select
 import os
 from .db import engine
 from .routes import tasks
 from .routes.auth import router as auth_router
 from .routes.chat import router as chat_router
+from .models import Task
 import logging
 
 # Set up logging
@@ -192,4 +193,49 @@ def fix_priority_case():
         }
     except Exception as e:
         logger.error(f"Error fixing priority cases: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/fix-timezone-data")
+def fix_timezone_data():
+    """
+    Temporary endpoint to fix timezone issues in existing task due dates.
+    This endpoint should be removed after the timezone data is fixed.
+    """
+    from sqlmodel import Session
+    from datetime import datetime
+    import pytz
+
+    try:
+        with Session(engine) as session:
+            # Get all tasks with due dates
+            tasks = session.exec(select(Task).where(Task.due_date.is_not(None))).all()
+
+            updated_count = 0
+            for task in tasks:
+                # If the due date is naive (no timezone), assume it's in the user's local timezone
+                # and convert it to UTC for storage
+                if task.due_date and task.due_date.tzinfo is None:
+                    # Assuming the local timezone is Pakistan Standard Time (PKT)
+                    local_tz = pytz.timezone('Asia/Karachi')
+                    local_dt = local_tz.localize(task.due_date)
+
+                    # Convert to UTC
+                    utc_dt = local_dt.astimezone(pytz.UTC)
+
+                    # Update the task with the timezone-aware datetime
+                    task.due_date = utc_dt
+                    updated_count += 1
+
+            session.commit()
+
+        return {
+            "status": "success",
+            "message": f"Timezone data fixed for {updated_count} tasks",
+            "details": {
+                "tasks_updated": updated_count
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error fixing timezone data: {e}")
         return {"status": "error", "message": str(e)}
