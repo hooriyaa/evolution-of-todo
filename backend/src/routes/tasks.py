@@ -111,9 +111,14 @@ def create_task(
 
     session.add(task)
     session.commit()
-    session.refresh(task)
 
-    # Publish event to Dapr
+    # Refresh only the necessary fields to improve performance
+    session.refresh(task, attribute_names=['id', 'title', 'description', 'completed',
+                                          'due_date', 'category', 'priority', 'tags',
+                                          'is_recurring', 'recurring_rule', 'user_id',
+                                          'created_at', 'updated_at'])
+
+    # Publish event to Dapr asynchronously to not block the response
     try:
         event_data = {
             "event_type": "created",
@@ -122,7 +127,17 @@ def create_task(
             "user_id": task.user_id,
             "timestamp": datetime.utcnow().isoformat()
         }
-        publish_event(event_data)
+        # Run the event publishing in a background task to not block the response
+        from threading import Thread
+
+        def publish_event_async():
+            try:
+                publish_event(event_data)
+            except Exception as e:
+                logger.error(f"Failed to publish task created event: {str(e)}")
+
+        thread = Thread(target=publish_event_async, daemon=True)
+        thread.start()
     except Exception as e:
         # Log the error but don't raise it to ensure API request still succeeds
         logger.error(f"Failed to publish task created event: {str(e)}")
@@ -185,9 +200,14 @@ def update_task(
 
     session.add(task)
     session.commit()
-    session.refresh(task)
 
-    # Publish event to Dapr
+    # Refresh only the necessary fields to improve performance
+    session.refresh(task, attribute_names=['id', 'title', 'description', 'completed',
+                                          'due_date', 'category', 'priority', 'tags',
+                                          'is_recurring', 'recurring_rule', 'user_id',
+                                          'created_at', 'updated_at'])
+
+    # Publish event to Dapr asynchronously to not block the response
     try:
         event_data = {
             "event_type": "updated",
@@ -197,7 +217,17 @@ def update_task(
             "user_id": task.user_id,
             "timestamp": datetime.utcnow().isoformat()
         }
-        publish_event(event_data)
+        # Run the event publishing in a background task to not block the response
+        from threading import Thread
+
+        def publish_event_async():
+            try:
+                publish_event(event_data)
+            except Exception as e:
+                logger.error(f"Failed to publish task updated event: {str(e)}")
+
+        thread = Thread(target=publish_event_async, daemon=True)
+        thread.start()
     except Exception as e:
         # Log the error but don't raise it to ensure API request still succeeds
         logger.error(f"Failed to publish task updated event: {str(e)}")
@@ -214,30 +244,44 @@ def delete_task(
     """
     Delete a task permanently
     """
+    # Get the task first to retrieve its details before deletion
+    task = session.get(Task, task_id)
+
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # Verify that the task belongs to the user - fix type mismatch
+    if str(task.user_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Forbidden: access denied")
+
+    # Store values for the event before deletion
+    task_title = task.title
+    user_id = task.user_id
+
     # Use a direct delete query for better performance
-    statement = delete(Task).where(Task.id == task_id).where(Task.user_id == current_user.id)
-    result = session.exec(statement)
-
-    if result.rowcount == 0:
-        # Check if the task exists but belongs to another user
-        task_exists = session.get(Task, task_id)
-        if task_exists:
-            raise HTTPException(status_code=403, detail="Forbidden: access denied")
-        else:
-            raise HTTPException(status_code=404, detail="Task not found")
-
+    session.delete(task)
     session.commit()
 
-    # Publish event to Dapr
+    # Publish event to Dapr asynchronously to not block the response
     try:
         event_data = {
             "event_type": "deleted",
             "task_id": task_id,
-            "task_title": "unknown",  # We don't have the title anymore after deletion
-            "user_id": current_user.id,
+            "task_title": task_title,
+            "user_id": user_id,
             "timestamp": datetime.utcnow().isoformat()
         }
-        publish_event(event_data)
+        # Run the event publishing in a background task to not block the response
+        from threading import Thread
+
+        def publish_event_async():
+            try:
+                publish_event(event_data)
+            except Exception as e:
+                logger.error(f"Failed to publish task deleted event: {str(e)}")
+
+        thread = Thread(target=publish_event_async, daemon=True)
+        thread.start()
     except Exception as e:
         # Log the error but don't raise it to ensure API request still succeeds
         logger.error(f"Failed to publish task deleted event: {str(e)}")
@@ -276,11 +320,16 @@ def toggle_task_completion(
 
     session.add(task)
     session.commit()
-    session.refresh(task)
+
+    # Refresh only the necessary fields to improve performance
+    session.refresh(task, attribute_names=['id', 'title', 'description', 'completed',
+                                         'due_date', 'category', 'priority', 'tags',
+                                         'is_recurring', 'recurring_rule', 'user_id',
+                                         'created_at', 'updated_at'])
 
     logger.info(f"Successfully toggled task {task_id} completion status to {task.completed}")
 
-    # Publish event to Dapr
+    # Publish event to Dapr asynchronously to not block the response
     try:
         event_data = {
             "event_type": "updated",
@@ -291,7 +340,17 @@ def toggle_task_completion(
             "user_id": task.user_id,
             "timestamp": datetime.utcnow().isoformat()
         }
-        publish_event(event_data)
+        # Run the event publishing in a background task to not block the response
+        from threading import Thread
+
+        def publish_event_async():
+            try:
+                publish_event(event_data)
+            except Exception as e:
+                logger.error(f"Failed to publish task completion toggle event: {str(e)}")
+
+        thread = Thread(target=publish_event_async, daemon=True)
+        thread.start()
     except Exception as e:
         # Log the error but don't raise it to ensure API request still succeeds
         logger.error(f"Failed to publish task completion toggle event: {str(e)}")
