@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["tasks"])
 
 
-@router.get("/tasks", response_model=List[TaskResponse])
+@router.get("/tasks")
 def get_tasks(
     status: Optional[str] = Query(None, description="Filter by status (pending/completed)"),
     priority: Optional[str] = Query(None, description="Filter by priority (low/medium/high)"),
@@ -90,10 +90,18 @@ def get_tasks(
         query = query.order_by(Task.created_at)
 
     tasks = session.exec(query).all()
-    return tasks
+
+    # Apply timezone conversion to each task's due_date before returning
+    result = []
+    for task in tasks:
+        if task.due_date:
+            task.due_date = convert_from_utc(task.due_date)
+        result.append(task)
+
+    return result
 
 
-@router.post("/tasks", response_model=TaskResponse)
+@router.post("/tasks")
 def create_task(
     task_data: TaskCreate,
     current_user: User = Depends(get_current_user),
@@ -128,6 +136,10 @@ def create_task(
                                           'is_recurring', 'recurring_rule', 'user_id',
                                           'created_at', 'updated_at'])
 
+    # Apply timezone conversion to the task's due_date before returning
+    if task.due_date:
+        task.due_date = convert_from_utc(task.due_date)
+
     # Publish event to Dapr asynchronously to not block the response
     try:
         event_data = {
@@ -155,7 +167,7 @@ def create_task(
     return task
 
 
-@router.get("/tasks/{task_id}", response_model=TaskResponse)
+@router.get("/tasks/{task_id}")
 def get_task(
     task_id: int,
     current_user: User = Depends(get_current_user),
@@ -174,10 +186,14 @@ def get_task(
     if str(task.user_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Forbidden: access denied")
 
+    # Apply timezone conversion to the task's due_date before returning
+    if task.due_date:
+        task.due_date = convert_from_utc(task.due_date)
+
     return task
 
 
-@router.put("/tasks/{task_id}", response_model=TaskResponse)
+@router.put("/tasks/{task_id}")
 def update_task(
     task_id: int,
     task_update: TaskUpdate,
@@ -219,6 +235,10 @@ def update_task(
                                           'due_date', 'category', 'priority', 'tags',
                                           'is_recurring', 'recurring_rule', 'user_id',
                                           'created_at', 'updated_at'])
+
+    # Apply timezone conversion to the task's due_date before returning
+    if task.due_date:
+        task.due_date = convert_from_utc(task.due_date)
 
     # Publish event to Dapr asynchronously to not block the response
     try:
@@ -302,7 +322,7 @@ def delete_task(
     return {"message": "Task deleted successfully"}
 
 
-@router.patch("/tasks/{task_id}/complete", response_model=TaskResponse)
+@router.patch("/tasks/{task_id}/complete")
 def toggle_task_completion(
     task_id: int,
     current_user: User = Depends(get_current_user),
@@ -341,6 +361,10 @@ def toggle_task_completion(
                                          'created_at', 'updated_at'])
 
     logger.info(f"Successfully toggled task {task_id} completion status to {task.completed}")
+
+    # Apply timezone conversion to the task's due_date before returning
+    if task.due_date:
+        task.due_date = convert_from_utc(task.due_date)
 
     # Publish event to Dapr asynchronously to not block the response
     try:
