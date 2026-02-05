@@ -30,7 +30,7 @@ class TaskBase(SQLModel):
     description: Optional[str] = Field(sa_column=Column(Text))
     completed: bool = Field(default=False)
     user_id: int  # This will now reference our User.id
-    due_date: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True)))
+    due_date: Optional[datetime] = Field(sa_column=Column(DateTime))
     category: Optional[str] = Field(default=None, max_length=50)
     priority: PriorityEnum = Field(default=PriorityEnum.medium)
     tags: Optional[str] = Field(default=None)  # Comma-separated tags or JSON string
