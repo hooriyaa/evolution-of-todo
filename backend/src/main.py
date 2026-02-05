@@ -150,20 +150,19 @@ def add_indexes():
         return {"status": "error", "message": str(e)}
 
 
-@app.get("/fix-enum-case")
-def fix_enum_case():
+@app.get("/fix-priority-case")
+def fix_priority_case():
     """
-    Temporary endpoint to fix enum case issues in the database.
-    This endpoint should be removed after the enum cases are fixed.
+    Temporary endpoint to fix priority case issues in the database.
+    This endpoint should be removed after the priority cases are fixed.
     """
     from sqlmodel import text
 
-    # Define the SQL commands to fix enum case issues
+    # Define the SQL commands to fix priority case issues
     update_statements = [
-        "UPDATE task SET priority = 'medium' WHERE priority = 'Medium';",
-        "UPDATE task SET priority = 'low' WHERE priority = 'Low';",
-        "UPDATE task SET priority = 'high' WHERE priority = 'High';",
-        "UPDATE task SET category = LOWER(category);"
+        "UPDATE task SET priority = LOWER(priority);",  # Converts 'Medium' -> 'medium'
+        "ALTER TABLE task ALTER COLUMN priority SET DEFAULT 'medium';",  # Fixes the default for new tasks
+        "UPDATE task SET category = 'General' WHERE category IS NULL;"  # Cleanup
     ]
 
     try:
@@ -174,16 +173,15 @@ def fix_enum_case():
 
         return {
             "status": "success",
-            "message": "Enum cases fixed successfully",
+            "message": "Priority cases fixed successfully",
             "details": {
                 "updates_applied": [
-                    "Fixed priority 'Medium' to 'medium'",
-                    "Fixed priority 'Low' to 'low'",
-                    "Fixed priority 'High' to 'high'",
-                    "Converted all categories to lowercase"
+                    "Converted all priority values to lowercase",
+                    "Set default priority to 'medium'",
+                    "Set NULL categories to 'General'"
                 ]
             }
         }
     except Exception as e:
-        logger.error(f"Error fixing enum cases: {e}")
+        logger.error(f"Error fixing priority cases: {e}")
         return {"status": "error", "message": str(e)}
