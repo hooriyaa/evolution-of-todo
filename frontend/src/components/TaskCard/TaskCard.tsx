@@ -69,6 +69,20 @@ const renderTags = (tags: string | undefined) => {
 
 export const TaskCard = ({ task, onToggleComplete, onDelete, onEdit }: TaskCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false); // Track deletion state
+
+  // Handle delete with immediate feedback
+  const handleDelete = async () => {
+    setIsDeleting(true); // Show immediate feedback
+
+    try {
+      await onDelete(task.id); // Call the parent's delete function
+      // Card will be hidden by parent component after successful deletion
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      setIsDeleting(false); // Revert to normal state if there's an error
+    }
+  };
 
   return (
     <motion.div
@@ -162,15 +176,26 @@ export const TaskCard = ({ task, onToggleComplete, onDelete, onEdit }: TaskCardP
             onClick={() => onEdit(task)}
             className="p-1 text-brand-gray hover:text-brand-black rounded-full hover:bg-brand-gray/10"
             aria-label="Edit task"
+            disabled={isDeleting}
           >
             <Edit className="w-4 h-4" />
           </button>
           <button
-            onClick={() => onDelete(task.id)}
-            className="p-1 text-brand-gray hover:text-red-600 rounded-full hover:bg-brand-gray/10"
+            onClick={handleDelete}
+            className={`p-1 rounded-full hover:bg-brand-gray/10 ${isDeleting ? 'text-gray-400' : 'text-brand-gray hover:text-red-600'}`}
             aria-label="Delete task"
+            disabled={isDeleting}
           >
-            <Trash2 className="w-4 h-4" />
+            {isDeleting ? (
+              <div className="flex items-center">
+                <svg className="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
           </button>
         </div>
       </div>

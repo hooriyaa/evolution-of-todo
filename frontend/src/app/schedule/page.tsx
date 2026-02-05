@@ -342,14 +342,8 @@ const SchedulePage = () => {
                         const taskDueDate = taskForHour.due_date || taskForHour.dueDate;
                         let timeString = '';
                         if (taskDueDate) {
-                          const date = new Date(taskDueDate);
-
-                          // Get the time in the user's local timezone
-                          const hours = date.getHours();
-                          const minutes = date.getMinutes().toString().padStart(2, '0');
-                          const ampm = hours >= 12 ? 'PM' : 'AM';
-                          const displayHour = hours % 12 || 12;
-                          timeString = `${displayHour}:${minutes} ${ampm}`;
+                          // Convert to local time using the specified format
+                          timeString = new Date(taskDueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
                         }
 
                         return (
