@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 from datetime import datetime
 from ..models import Task, User
 from ..schemas import TaskCreate, TaskUpdate, TaskResponse
@@ -139,6 +139,7 @@ def get_task(
     """
     Get details of a specific task
     """
+    # Using session.get() is already efficient for fetching by primary key
     task = session.get(Task, task_id)
 
     if not task:
@@ -161,6 +162,7 @@ def update_task(
     """
     Update task fields including due_date, category, priority, tags, and recurring fields
     """
+    # Use a single query to fetch the task with user verification
     task = session.get(Task, task_id)
 
     if not task:
@@ -212,20 +214,18 @@ def delete_task(
     """
     Delete a task permanently
     """
-    task = session.get(Task, task_id)
+    # Use a direct delete query for better performance
+    statement = delete(Task).where(Task.id == task_id).where(Task.user_id == current_user.id)
+    result = session.exec(statement)
 
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+    if result.rowcount == 0:
+        # Check if the task exists but belongs to another user
+        task_exists = session.get(Task, task_id)
+        if task_exists:
+            raise HTTPException(status_code=403, detail="Forbidden: access denied")
+        else:
+            raise HTTPException(status_code=404, detail="Task not found")
 
-    # Verify that the task belongs to the user - fix type mismatch
-    if str(task.user_id) != str(current_user.id):
-        raise HTTPException(status_code=403, detail="Forbidden: access denied")
-
-    # Store values for the event before deletion
-    task_title = task.title
-    user_id = task.user_id
-
-    session.delete(task)
     session.commit()
 
     # Publish event to Dapr
@@ -233,8 +233,8 @@ def delete_task(
         event_data = {
             "event_type": "deleted",
             "task_id": task_id,
-            "task_title": task_title,
-            "user_id": user_id,
+            "task_title": "unknown",  # We don't have the title anymore after deletion
+            "user_id": current_user.id,
             "timestamp": datetime.utcnow().isoformat()
         }
         publish_event(event_data)

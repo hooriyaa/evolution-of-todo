@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel, Field, Column, DateTime, Text, Relationship
+from sqlalchemy import Index
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
@@ -12,11 +13,14 @@ class User(SQLModel, table=True):
     """
     User model for authentication
     """
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        Index("idx_user_email", "email", unique=True),
+        {"extend_existing": True}
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(min_length=1, max_length=100)
-    email: str = Field(unique=True, min_length=5, max_length=100)
+    email: str = Field(sa_column=Column("email", Text, unique=True, nullable=False, index=True))
     hashed_password: str = Field(min_length=1, max_length=200)
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
@@ -38,7 +42,15 @@ class Task(TaskBase, table=True):
     """
     Task model matching the schema specification
     """
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        Index("idx_task_user_id", "user_id"),
+        Index("idx_task_completed", "completed"),
+        Index("idx_task_due_date", "due_date"),
+        Index("idx_task_category", "category"),
+        Index("idx_task_priority", "priority"),
+        Index("idx_task_created_at", "created_at"),
+        {"extend_existing": True}
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=datetime.now)

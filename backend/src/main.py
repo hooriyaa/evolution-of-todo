@@ -24,10 +24,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",                    # Localhost (Testing ke liye)
-        "https://evolution-of-todo.vercel.app",     # ✅ Vercel Frontend (Ab ye chalega)
+        "https://evolution-of-todo.vercel.app",     # ✅ Vercel Frontend 
         "https://evolution-of-todo.onrender.com",   # Render Backend (Self)
-        "http://104.40.93.29",                      # ✅ Azure Frontend (Ab ye bhi chalega)
-        "http://104.40.93.29:80"                    # Safety ke liye Port 80
+        "http://104.40.93.29",                      # ✅ Azure Frontend
+        "http://104.40.93.29:80"                  
     ],
     allow_credentials=True,
     allow_methods=["*"],  # GET, POST, DELETE sab allow
@@ -102,4 +102,88 @@ def fix_db_schema():
         }
     except Exception as e:
         logger.error(f"Error updating database schema: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/add-indexes")
+def add_indexes():
+    """
+    Temporary endpoint to add database indexes for improved performance.
+    This endpoint should be removed after the indexes are added.
+    """
+    from sqlmodel import text
+
+    # Define the SQL commands to add indexes if they don't exist
+    index_statements = [
+        "CREATE INDEX IF NOT EXISTS idx_task_user_id ON task(user_id);",
+        "CREATE INDEX IF NOT EXISTS idx_task_completed ON task(completed);",
+        "CREATE INDEX IF NOT EXISTS idx_task_due_date ON task(due_date);",
+        "CREATE INDEX IF NOT EXISTS idx_task_category ON task(category);",
+        "CREATE INDEX IF NOT EXISTS idx_task_priority ON task(priority);",
+        "CREATE INDEX IF NOT EXISTS idx_task_created_at ON task(created_at);",
+        "CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);"
+    ]
+
+    try:
+        with engine.connect() as connection:
+            for statement in index_statements:
+                connection.execute(text(statement))
+            connection.commit()
+
+        return {
+            "status": "success",
+            "message": "Database indexes added successfully",
+            "details": {
+                "indexes_added": [
+                    "idx_task_user_id (on user_id)",
+                    "idx_task_completed (on completed)",
+                    "idx_task_due_date (on due_date)",
+                    "idx_task_category (on category)",
+                    "idx_task_priority (on priority)",
+                    "idx_task_created_at (on created_at)",
+                    "idx_user_email (on email)"
+                ]
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error adding database indexes: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/fix-enum-case")
+def fix_enum_case():
+    """
+    Temporary endpoint to fix enum case issues in the database.
+    This endpoint should be removed after the enum cases are fixed.
+    """
+    from sqlmodel import text
+
+    # Define the SQL commands to fix enum case issues
+    update_statements = [
+        "UPDATE task SET priority = 'medium' WHERE priority = 'Medium';",
+        "UPDATE task SET priority = 'low' WHERE priority = 'Low';",
+        "UPDATE task SET priority = 'high' WHERE priority = 'High';",
+        "UPDATE task SET category = LOWER(category);"
+    ]
+
+    try:
+        with engine.connect() as connection:
+            for statement in update_statements:
+                connection.execute(text(statement))
+            connection.commit()
+
+        return {
+            "status": "success",
+            "message": "Enum cases fixed successfully",
+            "details": {
+                "updates_applied": [
+                    "Fixed priority 'Medium' to 'medium'",
+                    "Fixed priority 'Low' to 'low'",
+                    "Fixed priority 'High' to 'high'",
+                    "Converted all categories to lowercase"
+                ]
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error fixing enum cases: {e}")
         return {"status": "error", "message": str(e)}
