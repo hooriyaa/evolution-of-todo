@@ -7,7 +7,7 @@ from ..schemas import TaskCreate, TaskUpdate, TaskResponse
 from ..auth import get_current_user
 from ..db import get_db
 from ..dapr_client import publish_event
-from ..utils import convert_to_utc
+from ..utils import convert_to_utc, convert_from_utc
 import logging
 
 # Set up logging
