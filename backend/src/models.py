@@ -3,7 +3,6 @@ from sqlalchemy import Index, DateTime
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
-import pytz
 
 class PriorityEnum(str, Enum):
     low = "low"
@@ -54,8 +53,8 @@ class Task(TaskBase, table=True):
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(pytz.UTC))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(pytz.UTC))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class Conversation(SQLModel, table=True):

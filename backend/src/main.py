@@ -203,7 +203,6 @@ def fix_timezone_data():
     This endpoint should be removed after the timezone data is fixed.
     """
     from sqlmodel import Session
-    from datetime import datetime
     import pytz
 
     try:
@@ -234,6 +233,15 @@ def fix_timezone_data():
             "message": f"Timezone data fixed for {updated_count} tasks",
             "details": {
                 "tasks_updated": updated_count
+            }
+        }
+    except ImportError:
+        # If pytz is not available, return an error message
+        return {
+            "status": "error",
+            "message": "pytz module not available. Please ensure it's installed.",
+            "details": {
+                "tasks_processed": 0
             }
         }
     except Exception as e:
