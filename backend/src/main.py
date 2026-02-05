@@ -20,8 +20,14 @@ app = FastAPI(
 
 # CORS Setup
 app.add_middleware(
-CORSMiddleware,
-    allow_origins=["*"],  # <--- Star '*' ka matlab sab allow
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",                    # Local testing
+        "https://evolution-of-todo.vercel.app",     # Vercel Frontend
+        "https://evolution-of-todo.onrender.com",   # Render Backend (Self)
+        "http://104.40.93.29",                      # 👈 AZURE FRONTEND IP (Yeh zaroori hai!)
+        "http://104.40.93.29:80"                    # (Safety ke liye port 80 bhi daal dein)
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
