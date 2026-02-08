@@ -23,18 +23,12 @@ app = FastAPI(
 # CORS Setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",                    # Localhost (Testing ke liye)
-        "https://evolution-of-todo.vercel.app",     # ✅ Vercel Frontend 
-        "https://evolution-of-todo.onrender.com",   # Render Backend (Self)
-        "http://104.40.93.29",                      # ✅ Azure Frontend
-        "http://104.40.93.29:80"                  
-    ],
+    allow_origins=["*"], # Allow all origins for development; restrict in production
     allow_credentials=True,
     allow_methods=["*"],  # GET, POST, DELETE sab allow
     allow_headers=["*"],
 )
-# === ROUTERS REGISTRATION ===
+# === ROUTERS REGISTRATION ===  
 # Auth Router
 app.include_router(auth_router)
 
